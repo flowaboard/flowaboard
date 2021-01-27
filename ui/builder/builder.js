@@ -25,7 +25,12 @@ class Builder extends ElementGroup{
         }
         
         .elements{
-            flex:1
+            flex:1;
+            transition: all .2s ease-in-out;
+        }
+        .elements.hidden{
+            width:0;
+            flex: 0 auto;
         }
         .board{
             flex: 3;
@@ -35,6 +40,21 @@ class Builder extends ElementGroup{
         }
         .behaviours{
             flex:1
+            transition: all .2s ease-in-out;
+        }
+        .behaviours.hidden{
+            width:0;
+            flex: 0 auto;
+        }
+        @keyframes expand {
+            from {
+              transform: scale(0.95);
+              opacity: 0.5;
+              background: #5470B0;
+            }
+        }
+        .behaviours builder-behaviour-list ui-behaviour-editor,.behaviours builder-behaviour-list ui-behaviour-type{
+            animation: expand .2s ease-in-out;
         }
         .behaviours builder-behaviour-list,
         .elements ui-list{
@@ -43,6 +63,7 @@ class Builder extends ElementGroup{
             font-family: monospace;            
             height: 100%;
             background: #eee;
+            transition: all .2s ease-in-out;
         }        
         ui-element-type{
             margin: 0.4rem;
@@ -59,6 +80,13 @@ class Builder extends ElementGroup{
             width: calc(100% - 0.4rem);
             height: calc(100% - 0.4rem);
             box-shadow: 0px 0px 2px 1px #252a2b;
+        }
+        .board [selected] {
+            outline: 1px solid blue;
+            z-index: 1000;
+            box-shadow: -3px 2px 15px 5px grey;
+            transform: scale(0.99);
+            transition: all 0.2s;
         }
         `
     }
@@ -125,6 +153,8 @@ class Builder extends ElementGroup{
 
         this.shadowRoot.querySelector('.behaviours builder-behaviour-list').addEventListener('addbehaviourrequest',event=>this.handleAddBehaviourRequest(event))
         
+        this.shadowRoot.querySelector('.behaviours builder-behaviour-list').addEventListener('removebehaviourrequest',event=>this.handleRemoveBehaviourRequest(event))
+        
 
     }
     handleElementSlected(event){
@@ -141,6 +171,11 @@ class Builder extends ElementGroup{
         
         const behaviour=ui.behaviours[event.target.value.Name]||ui.groupbehaviours[event.target.value.Name]
         this.selected.addBehaviour(new behaviour());        
+        this.shadowRoot.querySelector('.behaviours builder-behaviour-list').value=this.selected.behaviours.concat(this.allbehaviours.filter(b=>this.selected.behaviours.map(v=>v.constructor.name).indexOf(b.Name)<0))
+    }
+    handleRemoveBehaviourRequest(event){ 
+        const behaviourName=  event.target.value.constructor.name     
+        this.selected.removeBehaviour(behaviourName);        
         this.shadowRoot.querySelector('.behaviours builder-behaviour-list').value=this.selected.behaviours.concat(this.allbehaviours.filter(b=>this.selected.behaviours.map(v=>v.constructor.name).indexOf(b.Name)<0))
     }
 

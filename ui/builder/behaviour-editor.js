@@ -45,7 +45,17 @@ class BehaviourEditor extends Element{
             flex:6
         }
         slot[name="remove"] {
-            flex:1
+            flex:1;
+            cursor: pointer;
+            display:flex;
+            justify-content: center;
+            transition: all .2s ease-in-out;
+        }
+        slot[name="remove"]:hover{
+            transform: scale(1.4);
+        }
+        fa{
+            margin:0
         }
         `
     }
@@ -61,6 +71,17 @@ class BehaviourEditor extends Element{
         </span>       
         `
         
+    }
+    afterRender(){
+        this.shadowRoot.querySelector('i.fa.fa-minus').addEventListener('click',this.remove.bind(this))
+    }
+    remove(){
+        console.log(this.value)
+        const addbehaviourrequestEvent = new CustomEvent('removebehaviourrequest', {
+                bubbles: true,
+                composed:true,
+        });
+        this.dispatchEvent(addbehaviourrequestEvent)
     }
     
 }

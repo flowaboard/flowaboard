@@ -45,7 +45,7 @@ class ElementSelection extends Selection {
     handleDeSelectedChild(event){
         
         event.preventDefault()
-        event.target.removeBehaviours('Resizable')
+        //event.target.removeBehaviours('Resizable')
         const elementdeselectedEvent = new CustomEvent('elementdeselected', {
             bubbles: true,
             composed:true

@@ -19,6 +19,7 @@ class BehaviourList extends List{
 
         slot:not([name])::-webkit-scrollbar-track {
             background: #f1f1f1; 
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
         }
         
         slot:not([name])::-webkit-scrollbar-thumb {
@@ -28,6 +29,7 @@ class BehaviourList extends List{
         slot:not([name])::-webkit-scrollbar-thumb:hover {
             background: #555; 
         }
+        
         `
     }
     afterRender(){

@@ -39,8 +39,18 @@ class BehaviourType extends Element{
         slot[name="label"] {
             flex:6
         }
-        slot[name="remove"] {
-            flex:1
+        slot[name="add"] {
+            flex:1;            
+            cursor: pointer;
+            display:flex;
+            justify-content: center;
+            transition: all .2s ease-in-out;
+        }
+        slot[name="add"]:hover {
+            transform: scale(1.4);
+        }
+        fa{
+            margin:0
         }
         `
     }

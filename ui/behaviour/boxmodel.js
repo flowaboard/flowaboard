@@ -7,25 +7,23 @@ class BoxModel extends Behaviour {
     }
     width;
     height;
-    border = {
-        top:null,
-        left:null,
-        right:null,
-        bottom:null
-    };
-    margin = {
-        top:null,
-        left:null,
-        right:null,
-        bottom:null
-    }
-    padding = {
-        top:null,
-        left:null,
-        right:null,
-        bottom:null
-    }
-    box_shadow;
+    border; 
+    "border-top";
+    "border-left";
+    "border-right";
+    "border-bottom";
+    margin;
+    "margin-top";
+    "margin-left";
+    "margin-right";
+    "margin-bottom";
+    padding;
+    "padding-top";
+    "padding-left";
+    "padding-right";
+    "padding-bottom";
+    
+    "box-shadow";
 
 
     afterRender() {
@@ -42,18 +40,19 @@ class BoxModel extends Behaviour {
         //resizeObserver.observe(this.host);
     }
     get CSS() {
+        
         return `
         :host{
-            padding:2rem;
-            margin:2rem;
-            border:2px solid black;
-            outline:2px solid blue;
-            width:100%;
-            height:100%;
+            ${this.getOwnPropertyNames().filter(p=>this[p]&&p!='host').map(p=>`${p}:`+this[p]+';').join('\n')}
         }
         `
     }
+    get HTML(){
+        return `
+        `
+    }
     toJSON(){
+        //window.getComputedStyle(txt, null).getPropertyValue('padding-left')
         return {
             padding:this.padding,
             margin:this.margin,

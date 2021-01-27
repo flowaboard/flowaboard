@@ -50,7 +50,7 @@ class Behaviour{
         return []
     }
     attachEventHandlers(){
-        this.host.addEventListener ("DOMNodeInserted", function(ev) {
+        this.host.addEventListener ("DOMNodeInserted", function(e) {
             console.log(e.relatedNaode)
         });
         
@@ -60,6 +60,9 @@ class Behaviour{
     toJSON(){
         return Object.keys(this).filter(v=>!v.indexOf("_")==0||[].indexOf(v)<0).reduce((a,v)=>{a[v]=this[v];return a},{})
         
+    }
+    getOwnPropertyNames(){
+        return Object.getOwnPropertyNames(this).filter(v=>!v.indexOf("_")==0||[].indexOf(v)<0)
     }
 }
 export { Behaviour };

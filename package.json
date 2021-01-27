@@ -14,7 +14,8 @@
   },
   "devDependencies": {
     "http-server": "^0.12.3",
-    "live-server": "^1.2.1"
+    "live-server": "^1.2.1",
+    "resize-observer-polyfill": "^1.5.1"
   },
   "scripts": {
     "serve": "http-server --proxy http://localhost:8080?",

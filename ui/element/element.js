@@ -4,16 +4,16 @@ class Element extends HTMLElement {
     constructor() {
         super();
         this.behaviours = []
-        this.behaviour = {}
+        this.behaviour = {}//will convert to weekmap
     }
-    static elementRegistry={}
+    static elementRegistry={}//will convert to weekmap
     static register(elementTagName,elementClass){
         Element.elementRegistry[elementClass]=elementTagName
         Element.elementRegistry[elementTagName]=elementClass
         window.customElements.define(elementTagName, elementClass);
     }
     static getSample(){
-        const element=document.createElement(Element.elementRegistry[this])
+        const element=this.getNewInstance()
         element.innerHTML='Hello World'
         return element
     }  
@@ -39,6 +39,9 @@ class Element extends HTMLElement {
         } else {
             this.behaviour[behaviour.constructor.name].updateWith(behaviour)
         }
+    }
+    removeBehaviour(behaviourName){
+        this.removeBehaviours([behaviourName])
     }
     removeBehaviours(behavioursName) {
         //behavioursToRemove=behavioursToRemove.concat(this.behaviours.map())
@@ -214,6 +217,9 @@ class Element extends HTMLElement {
             // end execution
             if (callNow) func.apply(context, args);
         };
+    }
+    static getNewInstance(){
+        return document.createElement(Element.elementRegistry[this])
     }
 }
 Element.register('ui-element', Element);

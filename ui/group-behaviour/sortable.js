@@ -15,8 +15,19 @@ class Sortable extends GroupBehaviour {
             group: 'shared',
             multiDrag: true,
             selectedClass: "selected",
-            animation: 150
+            animation: 150,
+            swapThreshold: 0.65,
           })
+          for(var child of this.host.children){
+            new Sortable(child, {
+                group: 'nested',
+                animation: 150,
+                multiDrag: true,
+                selectedClass: "selected",
+                fallbackOnBody: true,
+                swapThreshold: 0.65
+            });
+        }
         
     }
     removeEventHandlers(){

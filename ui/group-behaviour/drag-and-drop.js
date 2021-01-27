@@ -57,6 +57,10 @@ class DragAndDrop extends GroupBehaviour{
     }
     allowDrop(e) {
         e.preventDefault();
+        if (e.target.getAttribute("draggable") == "true")
+            e.dataTransfer.dropEffect = "none"; // dropping is not allowed
+        else
+            e.dataTransfer.dropEffect = "all"; // drop it like it's hot
     }
 }
 export { DragAndDrop };

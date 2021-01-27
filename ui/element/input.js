@@ -63,9 +63,10 @@ class Input extends Element{
         `
         
     }
-    attachEventHandlers(){
+    afterRender(){
         this.shadowRoot.querySelector('input').addEventListener('change',this.handleInputChange.bind(this))
         this.shadowRoot.querySelector('input').addEventListener('keyup',this.handleInputChange.bind(this))
+        this.shadowRoot.querySelector('input').value=this.value
     }  
     handleInputChange(){
         this._value=this.shadowRoot.querySelector('input').value
