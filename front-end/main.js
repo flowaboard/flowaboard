@@ -1,5 +1,5 @@
 
-import * as alaSQLSpace from './node_modules/alasql/dist/alasql.js';
+import * as alaSQLSpace from '../alasql/dist/alasql.js';
 import * as architecture from './data/architecture/architecture.js';
 
 import * as ui from '../../ui/export.js'

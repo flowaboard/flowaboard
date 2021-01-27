@@ -1,7 +1,7 @@
 import { GroupBehaviour } from "./group-behaviour.js";
 import { Draggable } from "../behaviour/draggable.js";
 import { Resizable } from "../behaviour/resizable.js";
-import {Sortable as SortableFramwork,MultiDrag} from '../../node_modules/sortablejs/modular/sortable.esm.js';
+import {Sortable as SortableFramwork,MultiDrag} from '/sortablejs/modular/sortable.esm.js';
 
 class Sortable extends GroupBehaviour {
 
