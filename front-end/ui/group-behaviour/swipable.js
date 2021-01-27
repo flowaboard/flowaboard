@@ -1,4 +1,4 @@
-import Swiper from '../../node_modules/swiper/js/swiper.esm.browser.bundle.js';
+import Swiper from '/swiper/js/swiper.esm.browser.bundle.js';
 import {GroupBehaviour} from './group-behaviour.js'
 class Swipable extends GroupBehaviour {
 

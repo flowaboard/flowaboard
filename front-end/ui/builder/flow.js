@@ -1,5 +1,5 @@
 import {ElementGroup} from '../element-group/group.js'
-import '../../node_modules/d3/dist/d3.js'
+import '/d3/dist/d3.js'
 //import '../../node_modules/d3-3d/src/3d.js'
 
 
