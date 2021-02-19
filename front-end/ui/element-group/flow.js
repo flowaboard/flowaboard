@@ -186,14 +186,17 @@ class FlowElement extends Element{
     }
 
     updateLinkHead(){
-        this.inLinks.forEach((link)=>{
+        var inlinkCenter=this.inLinks.length/2
+        var isEven=this.inLinks.length%2==0
+         
+        this.inLinks.forEach((link,i)=>{
            
             var x2 = this.getBoundingClientRect().x;
             var y2 = this.getBoundingClientRect().y;
             var width2=this.getBoundingClientRect().width;
             var height2=this.getBoundingClientRect().height;
             link.setAttribute("x2", x2-8);
-            link.setAttribute("y2", (y2 + height2 / 2));
+            link.setAttribute("y2", (y2 + height2 / 2)+10*(i+1-inlinkCenter)+(isEven?(-5):0));
         })
     }
 
