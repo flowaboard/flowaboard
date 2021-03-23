@@ -6,5 +6,4 @@ class Database extends FunctionUnit{
         this.processIdentifiers = new Set(processIdentifiers)
     }
 }
-FunctionUnit.register('database',Database)
 export {Database}

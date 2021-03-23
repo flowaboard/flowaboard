@@ -1,8 +1,8 @@
 {
-  "name": "business-hacakathon",
+  "name": "flow-abaord",
   "version": "1.0.0",
   "description": "Bring whole ALM to one interface",
-  "main": "main.js",
+  "main": "src/backend/index.js",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.2",
     "alasql": "^0.6.5",
@@ -11,24 +11,19 @@
     "express": "^4.15.2",
     "heroku": "^7.47.11",
     "materialize-css": "^1.0.0",
+    "resize-observer-polyfill": "^1.5.1",
     "sortablejs": "^1.13.0",
     "swiper": "^5.4.5"
   },
   "devDependencies": {
-    "http-server": "^0.12.3",
-    "live-server": "^1.2.1",
-    "resize-observer-polyfill": "^1.5.1"
+    "nodemon": "^2.0.7"
   },
   "scripts": {
     "start": "node back-end/index.js",
-    "serve": "http-server --proxy http://localhost:3000?",
-    "live": "live-server --port=3000",
+    "start-dev": "nodemon back-end/index.js --ignore front-end",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/flow-aboard/flowaboard.git"
-  },
-  "author": "",
+  "repository": "https://github.com/flow-aboard/flowaboard.git",
+  "author": "Manoj Choudhury <aj.manoj99@gmail.com>",
   "license": "ISC"
 }
