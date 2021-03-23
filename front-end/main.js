@@ -8,18 +8,34 @@ import { UI } from './data/architecture/ui.js'
 import { Database } from './data/architecture/database.js'
 
 var design = new architecture.Design()
-design.addProcess(new architecture.Process('js','Process','process',['ui'],['database']))
-design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
+design.addProcess(new architecture.Process('js','Process','process'))
 
-design.addProcess(new architecture.Process('js','Process2','process2',['ui2'],['database2']))
-design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest2',['process2']))
-design.addOutput(new architecture.Output('outbound.rest','Google','outbound.rest3',['process2']))
-design.addOutput(new architecture.Output('outbound.rest','Facebook','outbound.rest4',['process2']))
-design.addOutput(new architecture.Output('outbound.rest','Twitter','outbound.rest5',['process2']))
-design.addInput(new architecture.Input('input.rest','Twitter','input.rest',['process2']))
-const flow = document.createElement('ui-flow')
+//design.addProcess(new architecture.Process('js','Process','process',['ui'],['database']))
+// design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
+// design.addOutput(new architecture.Output('outbound.rest2','Outbound2','outbound.rest2',['process']))
+// setTimeout(function(){
+    
+//     design.addOutput(new architecture.Output('outbound.rest3','Outbound3','outbound.rest3',['process']))
+// },5000)
+
+// setTimeout(function(){
+    
+//     design.addOutput(new architecture.Output('outbound.rest4','Outbound4','outbound.rest4',['process']))
+// },15000)
+// design.addProcess(new architecture.Process('js','Process2','process2',['ui2'],['database2']))
+// design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest2',['process2']))
+// design.addOutput(new architecture.Output('outbound.rest','Google','outbound.rest3',['process2']))
+// design.addOutput(new architecture.Output('outbound.rest','Facebook','outbound.rest4',['process2']))
+// design.addOutput(new architecture.Output('outbound.rest','Twitter','outbound.rest5',['process2']))
+// design.addInput(new architecture.Input('input.rest','Twitter','input.rest',['process2']))
+const flow = Flow.getNewInstance();
 document.body.appendChild(flow)
 flow.value=design;
+design.subscribe('change',(e)=>{
+    flow.handleValueChange()
+})
+flow.activeWidth="60%"
+flow.activeHeight="60%"
 
 alasql("CREATE TABLE example1 (a INT, b INT)");
 

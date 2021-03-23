@@ -20,5 +20,4 @@ class UI extends FunctionUnit{
         return builder;
     }
 }
-FunctionUnit.register('ui',UI)
 export {UI}
