@@ -753,18 +753,18 @@ class Flow extends ElementGroup{
         //     this.value.inputs[0].flowElement.attr("transform", d3.event.transform);
         // }
 
-        // Create scale
-        var scale = d3.scaleLinear()  
-                    .domain([0, this.clientWidth])                  
-                    .range([0, this.clientWidth]);
+        // // Create scale
+        // var scale = d3.scaleLinear()  
+        //             .domain([0, this.clientWidth])                  
+        //             .range([0, this.clientWidth]);
 
-        // Add scales to axis
-        var x_axis = d3.axisBottom()
-                    .scale(scale);
+        // // Add scales to axis
+        // var x_axis = d3.axisBottom()
+        //             .scale(scale);
 
-        //Append group and insert axis
-        d3svg.append("g")
-        .call(x_axis);
+        // //Append group and insert axis
+        // d3svg.append("g")
+        // .call(x_axis);
         
 
         this._svg = d3svg
