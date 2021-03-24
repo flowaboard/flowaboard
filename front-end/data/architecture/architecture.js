@@ -3,13 +3,15 @@ import { Data } from '../data.js'
 class FunctionUnit extends Data{
     type;
     label;
-    uid;
-    constructor(type, label, uid) {
+    id;
+    data;
+    description;
+    constructor(type, label, id) {
         super()
         this.type = type
         this.label = label
-        this.uid = uid        
-        FunctionUnit.functionUnits.set(uid,this)
+        this.id = id        
+        FunctionUnit.functionUnits.set(id,this)
     }
     getUi(){
         return null
@@ -25,8 +27,8 @@ class FunctionUnit extends Data{
 class Input extends FunctionUnit {
     processIdentifiers;
     design;
-    constructor(type, label, uid, processIdentifiers) {
-        super(type, label, uid)
+    constructor(type, label, id, processIdentifiers) {
+        super(type, label, id)
         this.processIdentifiers = new Set(processIdentifiers)
     }
     next(){
@@ -38,8 +40,8 @@ class Process extends FunctionUnit {
     outputIdentifiers;
     inputIdentifiers;
 
-    constructor(type, label, uid, inputIdentifiers, outputIdentifiers) {
-        super(type, label, uid)
+    constructor(type, label, id, inputIdentifiers, outputIdentifiers) {
+        super(type, label, id)
         this.inputIdentifiers = new Set(inputIdentifiers)
         this.outputIdentifiers = new Set(outputIdentifiers)
     }
@@ -70,8 +72,8 @@ class Process extends FunctionUnit {
 }
 class Output extends FunctionUnit {
     processIdentifiers;
-    constructor(type, label, uid, processIdentifiers) {
-        super(type, label, uid)
+    constructor(type, label, id, processIdentifiers) {
+        super(type, label, id)
         this.processIdentifiers = new Set(processIdentifiers)
     }
 
@@ -89,7 +91,7 @@ class Design extends Data{
     processes;
     _processMap;
     _linkMap;
-    uid;
+    id;
     constructor() {
         super()
         this.inputs = []
@@ -97,21 +99,33 @@ class Design extends Data{
         this.processes = []
     }
     
-    getFunctionalUnit(uid){
-        return FunctionUnit.functionUnits.get(uid)
+    getFunctionalUnit(id){
+        return FunctionUnit.functionUnits.get(id)
+    }
+
+    add(functionalUnit){
+        if(functionalUnit instanceof Input){
+            addInput(functionalUnit)
+        }
+        if(functionalUnit instanceof Process){
+            addProcess(functionalUnit)
+        }
+        if(functionalUnit instanceof Output){
+            addOutput(functionalUnit)
+        }
     }
 
     addInput(input) {
         this.inputs.push(input)
 
-        input.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).inputIdentifiers.add(input.uid))
+        input.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).inputIdentifiers.add(input.id))
         this.publish('change')
         
     }
     addOutput(output) {
         this.outputs.push(output)
 
-        output.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).outputIdentifiers.add(output.uid))
+        output.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).outputIdentifiers.add(output.id))
 
         this.publish('change')
     }
@@ -120,23 +134,23 @@ class Design extends Data{
 
         Array.from([...process.inputIdentifiers])
             .filter(inputIdentifier => !this.getFunctionalUnit(inputIdentifier))
-            .map(inputIdentifier => new Input(inputIdentifier, inputIdentifier, inputIdentifier, [process.uid]))
+            .map(inputIdentifier => new Input(inputIdentifier, inputIdentifier, inputIdentifier, [process.id]))
             .forEach(input => this.addInput(input))
 
         Array.from([...process.outputIdentifiers])
             .filter(outputIdentifier => !this.getFunctionalUnit(outputIdentifier))
-            .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier, outputIdentifier, [process.uid]))
+            .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier, outputIdentifier, [process.id]))
             .forEach(output => this.addOutput(output))
 
         // Array.from([...process.inputIdentifiers])
         //     .filter(inputIdentifier => this._inputMap[inputIdentifier])
         //     .map(inputIdentifier => this._inputMap[inputIdentifier])
-        //     .forEach(input => input.processIdentifiers.add(process.uid))
+        //     .forEach(input => input.processIdentifiers.add(process.id))
 
         // Array.from([...process.outputIdentifiers])
         //     .filter(outputIdentifier => !this._outputMap[outputIdentifier])
         //     .map(outputIdentifier => this._outputMap[outputIdentifier])
-        //     .forEach(output => output.processIdentifiers.add(process.uid))
+        //     .forEach(output => output.processIdentifiers.add(process.id))
         
         this.publish('change')
         

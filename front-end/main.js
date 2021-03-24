@@ -1,4 +1,5 @@
 
+
 import * as alaSQLSpace from './lib/alasql/dist/alasql.js';
 import * as architecture from './data/architecture/architecture.js';
 
@@ -6,17 +7,16 @@ import * as ui from '../../ui/export.js'
 import { Flow } from './ui/element-group/flow.js'
 import { UI } from './data/architecture/ui.js'
 import { Database } from './data/architecture/database.js'
-
 var design = new architecture.Design()
-design.addProcess(new architecture.Process('js','Process','process'))
+//design.addProcess(new architecture.Process('js','Process','process'))
 
-//design.addProcess(new architecture.Process('js','Process','process',['ui'],['database']))
-// design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
-// design.addOutput(new architecture.Output('outbound.rest2','Outbound2','outbound.rest2',['process']))
-// setTimeout(function(){
+design.addProcess(new architecture.Process('js','Process','process',['ui'],['database']))
+design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
+design.addOutput(new architecture.Output('outbound.rest2','Outbound2','outbound.rest2',['process']))
+setTimeout(function(){
     
-//     design.addOutput(new architecture.Output('outbound.rest3','Outbound3','outbound.rest3',['process']))
-// },5000)
+    design.addOutput(new architecture.Output('outbound.rest3','Outbound3','outbound.rest3',['process']))
+},2000)
 
 // setTimeout(function(){
     
@@ -32,7 +32,7 @@ const flow = Flow.getNewInstance();
 document.body.appendChild(flow)
 flow.value=design;
 design.subscribe('change',(e)=>{
-    flow.handleValueChange()
+    flow.handleValueChange(e)
 })
 flow.activeWidth="60%"
 flow.activeHeight="60%"
@@ -64,7 +64,7 @@ console.log(res);
 
 
 
-
+console.log(esprima)
 
 
 //design.addInput(new architecture.Input('Inbound','Inbound','json',['process']))
