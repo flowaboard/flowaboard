@@ -1,6 +1,7 @@
 import {ElementGroup} from '../element-group/group.js'
 import {Element} from '../element/element.js'
-import 'https://cdn.jsdelivr.net/npm/d3@6.6.0/dist/d3.min.js'
+import '../../node_modules/d3/dist/d3.js'
+//import 'https://cdn.jsdelivr.net/npm/d3@6.6.0/dist/d3.min.js'
 import { Next } from '../element-group/next.js'
 //import '../../node_modules/d3-3d/src/3d.js'
 
