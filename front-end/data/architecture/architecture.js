@@ -11,7 +11,6 @@ class FunctionUnit extends Data{
         this.type = type
         this.label = label
         this.id = id        
-        FunctionUnit.functionUnits.set(id,this)
     }
     getUi(){
         return null
@@ -22,8 +21,56 @@ class FunctionUnit extends Data{
     previous(){
         return []
     }
+    get design(){
+        //Unnecessary complex
+        var design = Design.functionUnitDesign.get(this,design)
+        if(!design){
+            design=new Design()    
+
+            Design.functionUnitDesign.set(this,design)
+            Design.designParentDesign.set(design,Design.functionUnitParentDesign.get(this))
+        }
+        return design;
+    }
     static functionUnits=new Map()
 }
+class Design extends Data{
+
+    id;
+    functionUnits
+
+    static functionUnitDesign=new WeakMap();
+    static designParentDesign=new WeakMap();
+    static functionUnitParentDesign=new WeakMap();
+    constructor() {
+        super()
+        this.functionUnits = []
+    }
+    
+    getFunctionalUnit(id){
+        if(id){
+            //Can also use cache system to make things faster
+            return [...this.functionUnits].find(fu=>fu.id==id);
+        }else{
+            return []
+        }
+    }
+
+    getFunctionalUnits(ids){
+        if(ids&&ids.length>0){
+            //Can also use cache system to make things faster
+            return [...this.functionUnits].filter(fu=>ids.indexOf(fu.id));
+        }else{
+            return []
+        }
+    }
+
+    add(functionalUnit){
+        this.functionUnits.push(functionalUnit)
+        Design.functionUnitParentDesign.set(functionalUnit,this)
+    }
+}
+
 class Input extends FunctionUnit {
     processIdentifiers;
     design;
@@ -52,10 +99,7 @@ class Process extends FunctionUnit {
         return this.inputIdentifiers
     }
     getActiveUi(){
-        var div=document.createElement('div');
-        div.innerHTML=`
-            Hello i am new active sate
-        `
+        var div=document.createElement('js-input');
         return div;
     }
     getUi(status){
@@ -83,15 +127,11 @@ class Output extends FunctionUnit {
 
 }
 
-class Design extends Data{
+class LogicDesign extends Design{
     inputs;
-    _inputMap;
     outputs;
-    _outputMap
     processes;
-    _processMap;
-    _linkMap;
-    id;
+
     constructor() {
         super()
         this.inputs = []
@@ -99,35 +139,35 @@ class Design extends Data{
         this.processes = []
     }
     
-    getFunctionalUnit(id){
-        return FunctionUnit.functionUnits.get(id)
-    }
 
     add(functionalUnit){
         if(functionalUnit instanceof Input){
-            addInput(functionalUnit)
+            this.addInput(functionalUnit)
         }
         if(functionalUnit instanceof Process){
-            addProcess(functionalUnit)
+            this.addProcess(functionalUnit)
         }
         if(functionalUnit instanceof Output){
-            addOutput(functionalUnit)
+            this.addOutput(functionalUnit)
         }
     }
 
     addInput(input) {
         this.inputs.push(input)
 
-        input.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).inputIdentifiers.add(input.id))
-        this.publish('change')
+        this.getFunctionalUnits(input.processIdentifiers).forEach(fu => fu.inputIdentifiers.add(input.id))
         
+        super.add(input)
+        this.publish('change')         
     }
     addOutput(output) {
         this.outputs.push(output)
 
-        output.processIdentifiers.forEach(processIdentifier => this.getFunctionalUnit(processIdentifier).outputIdentifiers.add(output.id))
-
+        this.getFunctionalUnits(output.processIdentifiers).forEach(fu => fu.outputIdentifiers.add(output.id))
+        
+        super.add(output)
         this.publish('change')
+        
     }
     addProcess(process) {
         this.processes.push(process)
@@ -141,20 +181,16 @@ class Design extends Data{
             .filter(outputIdentifier => !this.getFunctionalUnit(outputIdentifier))
             .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier, outputIdentifier, [process.id]))
             .forEach(output => this.addOutput(output))
-
-        // Array.from([...process.inputIdentifiers])
-        //     .filter(inputIdentifier => this._inputMap[inputIdentifier])
-        //     .map(inputIdentifier => this._inputMap[inputIdentifier])
-        //     .forEach(input => input.processIdentifiers.add(process.id))
-
-        // Array.from([...process.outputIdentifiers])
-        //     .filter(outputIdentifier => !this._outputMap[outputIdentifier])
-        //     .map(outputIdentifier => this._outputMap[outputIdentifier])
-        //     .forEach(output => output.processIdentifiers.add(process.id))
         
+        super.add(process)
         this.publish('change')
         
     }
+    get types(){
+        return ['inputs','processes','outputs']
+    }
 }
 
-export {Design,Input,Output,Process,FunctionUnit}
+
+
+export {LogicDesign,Design,Input,Output,Process,FunctionUnit}

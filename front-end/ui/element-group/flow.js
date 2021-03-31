@@ -10,52 +10,40 @@ import * as architecture from '../../data/architecture/architecture.js';
 
 class FlowUtility{
 
-    static getEvenlySpaced(length){
-        var evenlySpaced=[]
-        if(length==1){
-            //console.log(0,0)
-            evenlySpaced.push(0)
-        }
-        if(length%2==0){
-            //console.log('even')
-            for(var j=0;j<length;j++){
-                if(j<length/2){
-                    //console.log(j,Math.trunc(j+1-(i)/2)-1)
-                    evenlySpaced.push(Math.trunc(j+1-(length)/2)-1)
-                }
-                if(j>=length/2){
-                    //console.log(j,Math.trunc(j+1-(i)/2))
-                    evenlySpaced.push(Math.trunc(j+1-(length)/2))
-                }  
+
+    static getEvenlySpacedFromCenter(totalValue,divisions,divisionDimension,minseparation){
+        var coordinates=[],divisionDimensions=[]
+        var maxdivisionDimensionPossible=totalValue/divisions;
+        var divisionDimensionWithSeperation=divisionDimension+2*(minseparation);
+        var wastypeeLength=maxdivisionDimensionPossible-divisionDimensionWithSeperation;
+        var totalWastypeeLength=wastypeeLength*divisions
+        if(wastypeeLength>0){
+            
+            var requiredTotalValue=totalValue-totalWastypeeLength
+            for(var i=0;i<divisions;i++){
+                coordinates.push(totalWastypeeLength/2+(divisionDimensionWithSeperation*i)+(divisionDimensionWithSeperation*0.5))
+                divisionDimensions.push(divisionDimension)
             }
+            return {coordinates,divisionDimensions}
+        }else{
+            divisionDimension=maxdivisionDimensionPossible-2*(minseparation/2)-1;//-1 for imax depth issue
+            return FlowUtility.getEvenlySpacedFromCenter(totalValue,divisions,divisionDimension,minseparation/2)
         }
-        if(length!=1&&length%2==1){
-            //console.log('odd')
-            for(j=0;j<length;j++){
-                //console.log(i,j,(j)-((i-1)/2))
-                evenlySpaced.push((j)-((length-1)/2))
-            }
-        }
-        return evenlySpaced;
     }
 
-    static getEvenlySpacedFromCenter(totalValue,divisions,divisionLength,minseparation){
-        var coordinates=[]
-        var maxDivisionLengthPossible=totalValue/divisions;
-        var divisionLengthWithSeperation=divisionLength+2*(minseparation);
-        var wastageLength=maxDivisionLengthPossible-divisionLengthWithSeperation;
-        if(wastageLength>0){
-            var totalWastageLength=wastageLength*divisions
-            var requiredTotalValue=totalValue-totalWastageLength
-            for(var i=0;i<divisions;i++){
-                coordinates.push(totalWastageLength/2+(divisionLengthWithSeperation*i)+(divisionLengthWithSeperation*0.5))
-            }
-            return {coordinates,divisionLength}
-        }else{
-            divisionLength=maxDivisionLengthPossible-2*(minseparation)-20;
-            coordinates=FlowUtility.getEvenlySpacedFromCenter(totalValue,divisions,divisionLength,minseparation)
-            return {coordinates,divisionLength}
-        }
+    static subscribeResize(element,callback){
+        var selfObserver = new ResizeObserver(entries => {
+            entries.forEach(entry => {
+                
+                callback(event)
+                // console.log(entry.target)
+                // console.log('width', entry.contentRect.width);
+                // console.log('height', entry.contentRect.height);
+                // console.log('x',entry.contentRect.top)
+                // console.log('y',entry.contentRect.bottom)
+            });
+        });
+        selfObserver.observe(element);
     }
 
 }
@@ -163,6 +151,8 @@ class FlowElement extends Element{
     }
 
     attachEventHandlers(){
+        FlowUtility.subscribeResize(this,this.handleResize.bind(this))
+        
         this.shadowRoot.querySelector('.add-previous').onclick = this.handleAdd.bind(this);
         this.shadowRoot.querySelector('.add-next').onclick = this.handleAdd.bind(this);
 
@@ -216,10 +206,15 @@ class FlowElement extends Element{
         this.blur()       
     }
     handleTransitionEnd(){
-        this.updateLink()
+        this.updateLink(true)
     }
     handleAnimationEnd(){
-        this.updateLink()
+        this.updateLink(true)
+    }
+    handleResize(){
+        
+        this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension
+        this.updateLink()//Removed true as arrow lags behind 
     }
 
     width;
@@ -250,7 +245,7 @@ class FlowElement extends Element{
         this.style.left=x-this.getBoundingClientRect().width/2;//center the component
         this.style.top=y-this.getBoundingClientRect().height/2;//center the component;
 
-        //console.log(this.style.left,x-this.getBoundingClientRect().width)
+        //console.log(this.style.left,this.width,this)
 
         if(this.style.top>this.parentFlow.height/2)
         this.style.transformOrigin="left center"
@@ -283,17 +278,22 @@ class FlowElement extends Element{
         this.updateLinkTail()
     }
 
-    updateLink(){
-        this.animate({
-            duration: 600,
-            timing: function(timeFraction) {
-                return timeFraction;
-            },
-            draw: (progress)=>{                
-                this.updateLinkHead();
-                this.updateLinkTail();
-            }
-        });
+    updateLink(once){
+        if(once){
+            this.updateLinkHead();
+            this.updateLinkTail();
+        }else{
+            this.animate({
+                duration: 600,
+                timing: function(timeFraction) {
+                    return timeFraction;
+                },
+                draw: (progress)=>{                
+                    this.updateLinkHead();
+                    this.updateLinkTail();
+                }
+            });
+        }
     }
 
     updateLinkHead(){
@@ -345,11 +345,23 @@ class FlowElement extends Element{
     }
     focusNext(index){
         this.blur();
-        this.next()[index].focus()
+        var nextByIndex=this.next()[index]
+        if(nextByIndex){
+            nextByIndex.focus()
+        }else{
+            var event = new CustomEvent("switchflow");
+            this.dispatchEvent(event);
+        }
     }
     focusPrevious(index){
         this.blur();
-        this.previous()[index].focus()
+        var previousByIndex=this.previous()[index]
+        if(previousByIndex){
+            previousByIndex.focus()
+        }else{
+            var event = new CustomEvent("switchflow");
+            this.dispatchEvent(event);
+        }
     }
 
     inactiveState={}
@@ -462,15 +474,17 @@ Element.register('ui-flow-element', FlowElement);
 
 
 class Flow extends ElementGroup{
-    tags=['processes','inputs','outputs']
+    
     link={}
-    myObserver;
     active={}
     constructor() {
         super();        
         this.handleActiveListner = this.handleActive.bind(this)
         this.handleInactiveListner = this.handleInactive.bind(this)
         this.handleFocusListner = this.handleFocus.bind(this)
+        this.handleSVGResizeListner = this.handleSVGResize.bind(this)
+        this.handleKeyPressListner = this.handleKeyPress.bind(this)
+        this.handleSwitchListner=this.handleSwitch.bind(this)
         
     }
     get CSS(){
@@ -521,12 +535,17 @@ class Flow extends ElementGroup{
         
         svg line{
             transition: all 300ms;
+            stroke: #e87884;
         }
         svg line.hidden {
            visibility:visible;
            opacity:0.3;
            ttransform: scale(0.8); 
                     
+        }
+
+        svg line, svg marker>path{
+            stroke: #171515;
         }
         
         
@@ -599,25 +618,37 @@ class Flow extends ElementGroup{
         `
     }
     attachEventHandlers(){
-        document.body.onresize = this.handleSVGResize.bind(this)
+        window.addEventListener("resize",this.handleSVGResizeListner)           
+        document.addEventListener("keydown",this.handleKeyPressListner)
           
-        this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);        
-        document.onkeydown = (e)=>{this.checkKey(e)};
-        this.myObserver = new ResizeObserver(entries => {
-            entries.forEach(entry => {
-                // console.log('width', entry.contentRect.width);
-                // console.log('height', entry.contentRect.height);
-                // console.log('x',entry.contentRect.top)
-                // console.log('y',entry.contentRect.bottom)
-            });
-        });
+        this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);  
+        
+    }
+    removeEventHandlers(){
+        window.removeEventListener("resize",this.handleSVGResizeListner)           
+        document.removeEventListener("keydown",this.handleKeyPressListner)
+             
     }
     afterRender(){
         
+        this.link={}
+        this.fufemap=new WeakMap()
+        this.active={}
+        if(this._svg){
+            this._svg.node().remove(); 
+            this._svg=null
+        }
+
         this.active.width="60%",
         this.active.height="60%"
         this.active.x=this.clientWidth/2
         this.active.y=this.clientHeight/2
+
+        var flowElement=document.querySelector('ui-flow-element')
+        while(flowElement){
+            flowElement.remove()
+            flowElement=document.querySelector('ui-flow-element')
+        }
 
         if(this.value){
             this.updateSVG()         
@@ -625,13 +656,12 @@ class Flow extends ElementGroup{
 
         }
     }  
-    
-    handleValueChange(e){
-        this.updateSVG() 
+    update(){
+       this.updateSVG()  
     }
-    
-    checkKey(e) {
 
+    handleKeyPress(e) {
+        console.log(e)
         e = e || window.event;
         if (e.keyCode == '13') {
             this.setActiveByEnterKey()
@@ -660,8 +690,8 @@ class Flow extends ElementGroup{
     focusFEByKeyBoard(dir){
         var focused=this.shadowRoot.querySelector('.focus')
         if(!focused){
-            this.shadowRoot.querySelector('.'+this.tags[0]).focus()
-
+            this.shadowRoot.querySelector('.'+this.value.types[0]).focus()
+            return;
         }
         switch (dir) {
             case 'RIGHT':
@@ -687,7 +717,7 @@ class Flow extends ElementGroup{
             default:
                 this._focusByKeyBoardDir=0;
                 this._focusByKeyBoardIndex=0;
-                this.shadowRoot.querySelector('.'+this.tags[0]).focus()
+                this.shadowRoot.querySelector('.'+this.value.types[0]).focus()
                 break;
         }
         
@@ -697,9 +727,7 @@ class Flow extends ElementGroup{
         focused.active()
     }
 
-    handleClose(){
-        this.activeFlowElement.inactive()
-    }   
+    
       
     //Create SVG Container
     createSVG() {
@@ -729,7 +757,7 @@ class Flow extends ElementGroup{
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M 0 0 L 10 5 L 0 10 z")
-            .style("fill", "black");
+            //.style("fill", "black");
 
         
 
@@ -742,7 +770,7 @@ class Flow extends ElementGroup{
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M 0 -5 10 10")
-            .style("stroke", "black");
+            //.style("stroke", "black");
 
         // svg.call(d3.zoom()
         //     .extent([[0, 0], [width, height]])
@@ -794,59 +822,70 @@ class Flow extends ElementGroup{
         
             
         const xoffset = (width / 2)
-        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.tags.length,this.flowElementWidth,this.flowElementWidth*0.4)
+        
+        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.flowElementWidth,this.flowElementWidth*0.4)
 
-        this.tags.forEach((tag,tagIndex)=>{
-            var evenlySpaced=FlowUtility.getEvenlySpaced(this.value[tag].length);
-            
-            this.value[tag].forEach((functionUnit, functionUnitIndex) => {
+        
+        this.value.types.forEach((type,typeIndex)=>{            
+            this.value[type].forEach((functionUnit, functionUnitIndex) => {
                 var flowElement = this.getFlowElement(functionUnit)
-                flowElement.dimensions(xEvenelySpaced.divisionLength, this.flowElementHeight);
-                flowElement.coordinates(xEvenelySpaced.coordinates[1],(height / 2))
-                flowElement.basedOnELment=flowElement.basedOnELment||this
-                flowElement.classList.add(tag)
-                this.myObserver.observe(flowElement);
 
-                //Create FE for Each next FU
+                
+                flowElement.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], this.flowElementHeight);
+                flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
+                flowElement.basedOnELment=flowElement.basedOnELment||this
+                //console.log(flowElement.type,'Direct',xEvenelySpaced.coordinates[typeIndex],xEvenelySpaced.divisionDimension,flowElement.getBoundingClientRect().x)
+                
+                
+                flowElement.classList.add(type)
+
+
+                //Create Link for Each next FU and update cordinates for that fu's fe
                 Array.from([...functionUnit.next()]).forEach(identifier => {
                     var nextFU = this.value.getFunctionalUnit(identifier)
-                    if (nextFU && nextFU.flowElement) {
+                    var nextFUflowElement=this.getFlowElement(nextFU,true)
+                    if (nextFU && nextFUflowElement) {
                         var link = this.getLink(functionUnit.id, identifier)
                         flowElement.addOutLink(link)
-                        nextFU.flowElement.addInLink(link)
-                        if(tagIndex!=0){
-                            var previouses=nextFU.flowElement.previous()
-                            var {coordinates,divisionLength}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                            previouses.forEach((fe,i)=>{
-                                fe.basedOnELment=flowElement
-                                fe.dimensions(xEvenelySpaced.divisionLength, divisionLength);  
-                                fe.coordinates(xEvenelySpaced.coordinates[0],coordinates)
-                            })
-                        }
+                        nextFUflowElement.addInLink(link)
+                        //console.log('Previous of',nextFUflowElement.type,xEvenelySpaced.coordinates[typeIndex])
+                        
+                        var previouses=nextFUflowElement.previous()
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
+                        previouses.forEach((fe,i)=>{
+                            //console.log(fe.type,'Dependent',nextFUflowElement.type)
+                            fe.basedOnELment=flowElement
+                            fe.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], divisionDimensions[i]);  
+                            fe.coordinates(xEvenelySpaced.coordinates[typeIndex],coordinates[i])
+                        })
+                        
                     }
                 })
                 //Create FE for Each previous FU
                 Array.from([...functionUnit.previous()]).forEach(identifier => {
                     var previousFU = this.value.getFunctionalUnit(identifier)
-                    if (previousFU && previousFU.flowElement) {
+                    var previousFUflowElement=this.getFlowElement(previousFU,true)
+                    if (previousFU && previousFUflowElement) {
                         var link = this.getLink(identifier,functionUnit.id)
                         flowElement.addInLink(link)
-                        previousFU.flowElement.addOutLink(link)
+                        previousFUflowElement.addOutLink(link)
+                        //console.log('Next of',previousFUflowElement.type,xEvenelySpaced.coordinates[typeIndex])
+                        
+                        var nexts=previousFUflowElement.next()
 
-                        if(tagIndex!=0){
-                            var nexts=previousFU.flowElement.next()
-
-                            var {coordinates,divisionLength}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                                 
-                            nexts.forEach((fe,i)=>{
-                                fe.basedOnELment=flowElement
-                                fe.dimensions(xEvenelySpaced.divisionLength, divisionLength);                                
-                                fe.coordinates(xEvenelySpaced.coordinates[2],coordinates[i])
-                            })
-                        }
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
+                                
+                        nexts.forEach((fe,i)=>{
+                            //console.log(fe.type,'Dependent',previousFUflowElement.type)
+                            fe.basedOnELment=flowElement
+                            fe.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], divisionDimensions[i]);                                
+                            fe.coordinates(xEvenelySpaced.coordinates[typeIndex],coordinates[i])
+                        })
+                        
                     }
                 })
             });
+            
         })
 
         console.warn(`Processing flowElements took ${performance.now() - startTime}ms`);
@@ -862,15 +901,21 @@ class Flow extends ElementGroup{
         this.updateSVG()        
     }
 
+    fufemap=new WeakMap()
     //Create or use cached flowelements
-    getFlowElement(functionUnit) {
-        if(functionUnit.flowElement){
-            return functionUnit.flowElement
+    getFlowElement(functionUnit,avoidCreation) {
+        if(this.fufemap.has(functionUnit)){
+            return this.fufemap.get(functionUnit)
+        }
+        if(avoidCreation){
+            return
         }
         var flowElement=document.createElement('ui-flow-element')
+
+        this.fufemap.set(functionUnit,flowElement)
+
         flowElement.type=functionUnit.type
         flowElement.value=functionUnit
-        functionUnit.flowElement=flowElement;
         flowElement.parentFlow=this
 
         this.shadowRoot.querySelector('slot').append(flowElement)
@@ -884,7 +929,7 @@ class Flow extends ElementGroup{
         var link = this.link[sourceFlowElementIndentifier + "->" + destinationFlowElementIndentifier] 
         if(!link){
             link = this._svg.append("line")
-                .style("stroke", "black")
+                //.style("stroke", "black")
                 .attr("stroke-width", 2)
                 .attr("marker-end", "url(#triangle-outline)")
             this.link[sourceFlowElementIndentifier+ "->" + destinationFlowElementIndentifier] = link
@@ -901,8 +946,7 @@ class Flow extends ElementGroup{
             notActiveFE.hide()
             this.removeFlowElementEventListeners(notActiveFE)
         })      
-        
-        //this._svg.attr("viewBox", `0 0 ${this.clientWidth} ${this.clientHeight}`) 
+        document.removeEventListener("keydown",this.handleKeyPressListner)
     }
 
     handleInactive(event){
@@ -912,7 +956,7 @@ class Flow extends ElementGroup{
         })    
         this.addFlowElementEventListeners(event.target)
         this.activeFlowElement=null   
-         
+        document.addEventListener("keydown",this.handleKeyPressListner)
 
     }
 
@@ -923,16 +967,40 @@ class Flow extends ElementGroup{
        
     }
 
+    handleSwitch(event){
+        //this.value=event.target.value.design;
+        const changeEvent = new CustomEvent('switchflow', {
+            detail: { value: event.target.value }
+        });
+
+        this.dispatchEvent(changeEvent)
+    }
+
+    handleClose(){
+        if(this.activeFlowElement){
+            this.activeFlowElement.inactive()
+        }else{
+            
+            const changeEvent = new CustomEvent('switchflow', {
+                detail: { value: this.value }
+            });
+
+            this.dispatchEvent(changeEvent)
+        }
+    }   
+
     removeFlowElementEventListeners(flowElement){
         flowElement.removeEventListener('active',this.handleActiveListner)
         flowElement.addEventListener('inactive',this.handleInactiveListner)
         flowElement.removeEventListener('focus', this.handleFocusListner, true);
+        flowElement.addEventListener('switchflow', this.handleSwitchListner);
         
     }
     addFlowElementEventListeners(flowElement){
         flowElement.addEventListener('active', this.handleActiveListner)
         flowElement.removeEventListener('inactive',this.handleInactiveListner)
-        flowElement.addEventListener('focus', this.handleFocusListner, true);
+        flowElement.addEventListener('focus', this.handleFocusListner, true);//capture focus instead of bubble
+        flowElement.addEventListener('switchflow', this.handleSwitchListner);
         
     }
 
