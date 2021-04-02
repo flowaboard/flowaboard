@@ -110,28 +110,25 @@ var design = new architecture.LogicDesign()
 var jsProcess=new architecture.Process('js','Process','process')
 //design.addProcess(jsProcess)
 
-design.addProcess(new architecture.Process('js','Process','process',['ui'],['database']))
+design.addProcess(new architecture.Process('js','Process','process',['ui','ui2','ui3'],['database']))
 design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
 design.addOutput(new architecture.Output('outbound.rest2','Outbound2','outbound.rest2',['process']))
-setTimeout(function(){
-    
-    design.addOutput(new architecture.Output('outbound.rest3','Outbound3','outbound.rest3',['process']))
-},1000)
+
 
 
 function add(i){
-    console.log(i)
-    design.addOutput(new architecture.Output('outbound.rest'+i,'Outbound'+i,'outbound.rest'+i,['process']))
-    if(i<1)
-    //setTimeout(function(){
-        add(i+1)
-    //},100)
+    // console.log(i)
+    // design.addOutput(new architecture.Output('outbound.rest'+i,'Outbound'+i,'outbound.rest'+i,['process']))
+    // if(i<4)
+    // setTimeout(function(){
+    //    add(i+1)
+    // },100)
 }
 
-add(4)
+add(3)
 
 
-// design.addProcess(new architecture.Process('js','Process2','process2',['ui2'],['database2']))
+//design.addProcess(new architecture.Process('js','Process2','process2',['ui2'],['database']))
 // design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest2',['process2']))
 // design.addOutput(new architecture.Output('outbound.rest','Google','outbound.rest3',['process2']))
 // design.addOutput(new architecture.Output('outbound.rest','Facebook','outbound.rest4',['process2']))

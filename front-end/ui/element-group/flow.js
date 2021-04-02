@@ -212,9 +212,12 @@ class FlowElement extends Element{
         this.updateLink(true)
     }
     handleResize(){
+        //console.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
+        if(this.isActive) {   
+            this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
+        }
         
-        this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension
-        this.updateLink()//Removed true as arrow lags behind 
+        this.updateLink(true)//Updates Links on window or element resize
     }
 
     width;
@@ -291,6 +294,7 @@ class FlowElement extends Element{
                 draw: (progress)=>{                
                     this.updateLinkHead();
                     this.updateLinkTail();
+                    //console.log('updateLink')
                 }
             });
         }
@@ -474,7 +478,9 @@ Element.register('ui-flow-element', FlowElement);
 
 
 class Flow extends ElementGroup{
-    
+    //To cache fe for each fu 
+    fufemap=new WeakMap()
+    //To cache all links
     link={}
     active={}
     constructor() {
@@ -729,8 +735,117 @@ class Flow extends ElementGroup{
 
     
       
+    
+
+    //Update flowElments and their links
+    async updateSVG() {
+        if(this.activeFlowElement){            
+            return
+        }
+
+        const width = this.clientWidth
+        const height = this.clientHeight
+
+
+
+        this.flowElementWidth = this.clientWidth/6
+        this.flowElementHeight = this.clientHeight/6
+
+        var svg = this.getContainer()
+        svg.attr("viewBox", `0 0 ${width} ${height}`)
+
+
+        var startTime=performance.now()
+
+        
+            
+        const xoffset = (width / 2)
+        
+        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.flowElementWidth,this.flowElementWidth*0.4)
+
+        
+        this.value.types.forEach((type,typeIndex)=>{            
+            this.value[type].forEach((functionUnit, functionUnitIndex) => {
+                var flowElement = this.getFlowElement(functionUnit)
+
+                
+                flowElement.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], this.flowElementHeight);
+                flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
+                flowElement.basedOnELment=flowElement.basedOnELment||this
+                console.log(flowElement.type,'Direct',xEvenelySpaced.coordinates[typeIndex],xEvenelySpaced.divisionDimensions[typeIndex],flowElement.getBoundingClientRect().x)
+                
+                
+                flowElement.classList.add(type)
+
+                var fuNexts=Array.from([...functionUnit.next()])
+                var fuPreviouses=Array.from([...functionUnit.previous()])
+
+                //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
+                fuNexts.forEach(identifier => {
+                    var nextFU = this.value.getFunctionalUnit(identifier)
+                    var nextFUflowElement=this.getFlowElement(nextFU,true)
+                    if (nextFU && nextFUflowElement) {
+                        var link = this.getLink(functionUnit.id, identifier)
+                        flowElement.addOutLink(link)
+                        nextFUflowElement.addInLink(link)
+                        console.log(flowElement.type,' Previous of ',nextFUflowElement.type,"x"+nextFUflowElement.x)
+                        
+                        
+
+                        
+
+                        var previouses=nextFUflowElement.previous()
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
+                        previouses.forEach((fe,i)=>{
+                            console.log(fe.type,'Dependent on',flowElement.type,'y'+coordinates[i])
+                            fe.basedOnELment=flowElement
+                            fe.dimensions(fe.width, divisionDimensions[i]);  
+                            fe.coordinates(fe.x,coordinates[i])
+                        })
+                        
+                    }
+                })
+                 //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
+                fuPreviouses.forEach(identifier => {
+                    var previousFU = this.value.getFunctionalUnit(identifier)
+                    var previousFUflowElement=this.getFlowElement(previousFU,true)
+                    if (previousFU && previousFUflowElement) {
+                        var link = this.getLink(identifier,functionUnit.id)
+                        flowElement.addInLink(link)
+                        previousFUflowElement.addOutLink(link)
+                        //console.log(flowElement.type,' Next of ',previousFUflowElement.type,"x"+xEvenelySpaced.coordinates[typeIndex])
+                        
+                        var nexts=previousFUflowElement.next()
+
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
+                                
+                        nexts.forEach((fe,i)=>{
+                            //console.log(fe.type,'Dependent on',flowElement.type,"y"+coordinates[i])
+                            fe.basedOnELment=flowElement
+                            fe.dimensions(fe.width, divisionDimensions[i]);                                
+                            fe.coordinates(fe.x,coordinates[i])
+                        })
+                        
+                        
+                        
+                    }
+                })
+
+            });
+            
+        })
+
+        console.warn(`Processing flowElements took ${performance.now() - startTime}ms`);
+
+
+    }
+
+
+    
+
+    
     //Create SVG Container
-    createSVG() {
+    getContainer() {
         if(this._svg){
             return this._svg
         }
@@ -798,110 +913,6 @@ class Flow extends ElementGroup{
         this._svg = d3svg
         return this._svg
     }
-
-    //Update flowElments and their links
-    async updateSVG() {
-        if(this.activeFlowElement){            
-            return
-        }
-
-        const width = this.clientWidth
-        const height = this.clientHeight
-
-
-
-        this.flowElementWidth = this.clientWidth/6
-        this.flowElementHeight = this.clientHeight/6
-
-        var svg = this.createSVG()
-        svg.attr("viewBox", `0 0 ${width} ${height}`)
-
-
-        var startTime=performance.now()
-
-        
-            
-        const xoffset = (width / 2)
-        
-        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.flowElementWidth,this.flowElementWidth*0.4)
-
-        
-        this.value.types.forEach((type,typeIndex)=>{            
-            this.value[type].forEach((functionUnit, functionUnitIndex) => {
-                var flowElement = this.getFlowElement(functionUnit)
-
-                
-                flowElement.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], this.flowElementHeight);
-                flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
-                flowElement.basedOnELment=flowElement.basedOnELment||this
-                //console.log(flowElement.type,'Direct',xEvenelySpaced.coordinates[typeIndex],xEvenelySpaced.divisionDimension,flowElement.getBoundingClientRect().x)
-                
-                
-                flowElement.classList.add(type)
-
-
-                //Create Link for Each next FU and update cordinates for that fu's fe
-                Array.from([...functionUnit.next()]).forEach(identifier => {
-                    var nextFU = this.value.getFunctionalUnit(identifier)
-                    var nextFUflowElement=this.getFlowElement(nextFU,true)
-                    if (nextFU && nextFUflowElement) {
-                        var link = this.getLink(functionUnit.id, identifier)
-                        flowElement.addOutLink(link)
-                        nextFUflowElement.addInLink(link)
-                        //console.log('Previous of',nextFUflowElement.type,xEvenelySpaced.coordinates[typeIndex])
-                        
-                        var previouses=nextFUflowElement.previous()
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                        previouses.forEach((fe,i)=>{
-                            //console.log(fe.type,'Dependent',nextFUflowElement.type)
-                            fe.basedOnELment=flowElement
-                            fe.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], divisionDimensions[i]);  
-                            fe.coordinates(xEvenelySpaced.coordinates[typeIndex],coordinates[i])
-                        })
-                        
-                    }
-                })
-                //Create FE for Each previous FU
-                Array.from([...functionUnit.previous()]).forEach(identifier => {
-                    var previousFU = this.value.getFunctionalUnit(identifier)
-                    var previousFUflowElement=this.getFlowElement(previousFU,true)
-                    if (previousFU && previousFUflowElement) {
-                        var link = this.getLink(identifier,functionUnit.id)
-                        flowElement.addInLink(link)
-                        previousFUflowElement.addOutLink(link)
-                        //console.log('Next of',previousFUflowElement.type,xEvenelySpaced.coordinates[typeIndex])
-                        
-                        var nexts=previousFUflowElement.next()
-
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                                
-                        nexts.forEach((fe,i)=>{
-                            //console.log(fe.type,'Dependent',previousFUflowElement.type)
-                            fe.basedOnELment=flowElement
-                            fe.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], divisionDimensions[i]);                                
-                            fe.coordinates(xEvenelySpaced.coordinates[typeIndex],coordinates[i])
-                        })
-                        
-                    }
-                })
-            });
-            
-        })
-
-        console.warn(`Processing flowElements took ${performance.now() - startTime}ms`);
-
-
-
-
-
-    }
-
-
-    handleSVGResize() {
-        this.updateSVG()        
-    }
-
-    fufemap=new WeakMap()
     //Create or use cached flowelements
     getFlowElement(functionUnit,avoidCreation) {
         if(this.fufemap.has(functionUnit)){
@@ -937,6 +948,9 @@ class Flow extends ElementGroup{
         return link.node();
     }
 
+    handleSVGResize() {
+        this.updateSVG()        
+    }
 
     handleActive(event){
         this.activeFlowElement=event.target; 
