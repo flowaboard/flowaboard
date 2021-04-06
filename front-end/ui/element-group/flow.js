@@ -206,16 +206,16 @@ class FlowElement extends Element{
         this.blur()       
     }
     handleTransitionEnd(){
-        this.updateLink(true)
+        this.updateLink()
     }
     handleAnimationEnd(){
-        this.updateLink(true)
+        this.updateLink()
     }
     handleResize(){
         //console.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
-        if(this.isActive) {   
-            this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
-        }
+         
+        this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
+        
         
         this.updateLink(true)//Updates Links on window or element resize
     }
@@ -230,7 +230,8 @@ class FlowElement extends Element{
 
         this.style.width=width;
         this.style.height=height;
-
+        
+        //console.log("Set Dimenions",width,height)
         if(!this.isActive)
         this.inactiveState={...this.inactiveState,...{
             width:width,
@@ -245,10 +246,11 @@ class FlowElement extends Element{
         this.y=y
         this.z=z
 
+        // this.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)` //Has challenge to really make it independent of other transform css 
         this.style.left=x-this.getBoundingClientRect().width/2;//center the component
         this.style.top=y-this.getBoundingClientRect().height/2;//center the component;
 
-        //console.log(this.style.left,this.width,this)
+        //console.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
 
         if(this.style.top>this.parentFlow.height/2)
         this.style.transformOrigin="left center"
@@ -268,6 +270,26 @@ class FlowElement extends Element{
         return [...this.inLinks].map((link)=>link.tailFlowElement)
     }
 
+    siblings(){
+        var previousSiblings=[...this.previous()].reduce((siblings,p)=>{
+            siblings=siblings.concat(p.next())
+            return siblings
+        },[])
+        var nextSiblings=[...this.next()].reduce((siblings,n)=>{
+            siblings=siblings.concat(n.previous())
+            return siblings
+        },[])
+
+        
+        if(nextSiblings.length>0){
+            return nextSiblings
+        }
+        if(previousSiblings.length>0){
+            return previousSiblings
+        }
+        return []
+    }
+
     inLinks=new Set();
     outLinks=new Set();
     addInLink(link){
@@ -283,6 +305,7 @@ class FlowElement extends Element{
 
     updateLink(once){
         if(once){
+            //this.coordinates(this.x,this.y,this.z)// to update width based calculation
             this.updateLinkHead();
             this.updateLinkTail();
         }else{
@@ -291,7 +314,8 @@ class FlowElement extends Element{
                 timing: function(timeFraction) {
                     return timeFraction;
                 },
-                draw: (progress)=>{                
+                draw: (progress)=>{ 
+                    //this.coordinates(this.x,this.y,this.z)// to update width based calculation              
                     this.updateLinkHead();
                     this.updateLinkTail();
                     //console.log('updateLink')
@@ -311,7 +335,7 @@ class FlowElement extends Element{
             var y2 = this.getBoundingClientRect().y;
             var width2=this.getBoundingClientRect().width;
             var height2=this.getBoundingClientRect().height;
-            link.setAttribute("x2", x2-8);
+            link.setAttribute("x2", x2+(isEven?(-8):(-6)));
             link.setAttribute("y2", (y2 + height2 / 2)+(inLinksSize==1?0:10*(i+1-inlinkCenter))+(isEven?(-5):0));
         })
     }
@@ -376,8 +400,8 @@ class FlowElement extends Element{
         this.removeInactiveEventHandlers()
         this.isActive=true
         this.classList.add("active")
-        
-        this.dimensions( this.parentFlow.active.width,this.parentFlow.active.height)
+        var {width,height}=this.parentFlow.getFlowElementDimension('active')
+        this.dimensions( width,height)
         this.animate({
             duration: 600,
             timing: function(timeFraction) {
@@ -481,7 +505,7 @@ class Flow extends ElementGroup{
     //To cache fe for each fu 
     fufemap=new WeakMap()
     //To cache all links
-    link={}
+    linkMap={}
     active={}
     constructor() {
         super();        
@@ -498,7 +522,9 @@ class Flow extends ElementGroup{
         :host {
             display: block;
             height:100%;
+            width: 100%;
             transform-style: preserve-3d;
+            overflow:hidden;
         }
         #svg{
             width:100%;
@@ -637,7 +663,7 @@ class Flow extends ElementGroup{
     }
     afterRender(){
         
-        this.link={}
+        this.linkMap={}
         this.fufemap=new WeakMap()
         this.active={}
         if(this._svg){
@@ -739,39 +765,36 @@ class Flow extends ElementGroup{
 
     //Update flowElments and their links
     async updateSVG() {
-        if(this.activeFlowElement){            
-            return
-        }
-
+        
         const width = this.clientWidth
         const height = this.clientHeight
 
 
 
-        this.flowElementWidth = this.clientWidth/6
-        this.flowElementHeight = this.clientHeight/6
+        this.getFlowElementDimension().height = this.clientHeight/6
 
-        var svg = this.getContainer()
-        svg.attr("viewBox", `0 0 ${width} ${height}`)
+        var container = this.getContainer(this.clientWidth,this.clientHeight)
 
 
-        var startTime=performance.now()
+        this.performanceStart(`Processing flowElements took`)
 
         
-            
-        const xoffset = (width / 2)
-        
-        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.flowElementWidth,this.flowElementWidth*0.4)
+        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.getFlowElementDimension().width,this.getFlowElementDimensionMinSeperation().xminseperation)
 
         
-        this.value.types.forEach((type,typeIndex)=>{            
+        this.typesToRender.forEach((type)=>{
+            this.performanceStart(`Processing flowElements took for ${type}`)
+
+            var typeIndex=this.getTypeIndex(type)           
             this.value[type].forEach((functionUnit, functionUnitIndex) => {
                 var flowElement = this.getFlowElement(functionUnit)
-
                 
-                flowElement.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], this.flowElementHeight);
+                if(flowElement.isActive){
+                    return
+                }
+                
+                flowElement.dimensions(xEvenelySpaced.divisionDimensions[typeIndex], this.getFlowElementDimension().height);
                 flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
-                flowElement.basedOnELment=flowElement.basedOnELment||this
                 console.log(flowElement.type,'Direct',xEvenelySpaced.coordinates[typeIndex],xEvenelySpaced.divisionDimensions[typeIndex],flowElement.getBoundingClientRect().x)
                 
                 
@@ -784,21 +807,21 @@ class Flow extends ElementGroup{
                 fuNexts.forEach(identifier => {
                     var nextFU = this.value.getFunctionalUnit(identifier)
                     var nextFUflowElement=this.getFlowElement(nextFU,true)
-                    if (nextFU && nextFUflowElement) {
-                        var link = this.getLink(functionUnit.id, identifier)
-                        flowElement.addOutLink(link)
-                        nextFUflowElement.addInLink(link)
-                        console.log(flowElement.type,' Previous of ',nextFUflowElement.type,"x"+nextFUflowElement.x)
+                    if (nextFU && nextFUflowElement) {                        
+                        this.link(flowElement,nextFUflowElement)
+                        //console.log(flowElement.type,' Previous of ',nextFUflowElement.type,"x"+nextFUflowElement.x)
                         
                         
 
                         
 
-                        var previouses=nextFUflowElement.previous()
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                        previouses.forEach((fe,i)=>{
-                            console.log(fe.type,'Dependent on',flowElement.type,'y'+coordinates[i])
-                            fe.basedOnELment=flowElement
+                        var currentFuAndSiblings=nextFUflowElement.previous()
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,currentFuAndSiblings.length,this.getFlowElementDimension().height,this.getFlowElementDimensionMinSeperation().yminseperation)
+                        currentFuAndSiblings.forEach((fe,i)=>{
+                            if(fe.isActive){
+                                return
+                            }
+                            //console.log(fe.type,'Dependent on',flowElement.type,'y'+coordinates[i])
                             fe.dimensions(fe.width, divisionDimensions[i]);  
                             fe.coordinates(fe.x,coordinates[i])
                         })
@@ -810,18 +833,18 @@ class Flow extends ElementGroup{
                     var previousFU = this.value.getFunctionalUnit(identifier)
                     var previousFUflowElement=this.getFlowElement(previousFU,true)
                     if (previousFU && previousFUflowElement) {
-                        var link = this.getLink(identifier,functionUnit.id)
-                        flowElement.addInLink(link)
-                        previousFUflowElement.addOutLink(link)
+                        this.link(previousFUflowElement,flowElement)
                         //console.log(flowElement.type,' Next of ',previousFUflowElement.type,"x"+xEvenelySpaced.coordinates[typeIndex])
                         
-                        var nexts=previousFUflowElement.next()
+                        var currentFuAndSiblings=previousFUflowElement.next()
 
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
+                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,currentFuAndSiblings.length,this.getFlowElementDimension().height,this.getFlowElementDimensionMinSeperation().yminseperation)
                                 
-                        nexts.forEach((fe,i)=>{
-                            //console.log(fe.type,'Dependent on',flowElement.type,"y"+coordinates[i])
-                            fe.basedOnELment=flowElement
+                        currentFuAndSiblings.forEach((fe,i)=>{
+                            if(fe.isActive){
+                                return
+                            }
+                            //console.log(fe.type,'Dependent on',flowElement.type,"y"+coordinates[i])                            
                             fe.dimensions(fe.width, divisionDimensions[i]);                                
                             fe.coordinates(fe.x,coordinates[i])
                         })
@@ -831,28 +854,52 @@ class Flow extends ElementGroup{
                     }
                 })
 
+                //Future improvisation
+                //flowElement.coordinates(this.getFlowElementCoordinates(flowElement).x,this.getFlowElementCoordinates(flowElement).y)
+
             });
+
+            this.performanceEnd(`Processing flowElements took for ${type}`)
+ 
             
         })
 
-        console.warn(`Processing flowElements took ${performance.now() - startTime}ms`);
+        this.performanceEnd(`Processing flowElements took`)
 
 
     }
 
+    order='right-to-left'||'left-to-right'||'center'
+    get typesToRender(){
+        if(this.order=='left-to-right')
+            return [...this.types,this.types[0]]
+        else if(this.order=='right-to-left')
+            return [...this.types.reverse(),this.types[this.types.length-1],...this.types.reverse(),this.types[this.types.length-1]]
+        else
+            return [...this.types,this.types[0]]
+    }
+    get types(){
+        return this.value.types
+    }
 
-    
+    getTypeIndex(type){
+        console.log('Processing',type)
+        return this.types.indexOf(type)
+    }  
 
     
     //Create SVG Container
-    getContainer() {
+    getContainer(width,height) {
         if(this._svg){
+            
+            this._svg.attr("viewBox", `0 0 ${width} ${height}`)
             return this._svg
         }
         var svg = this.shadowRoot.querySelector('svg')
         var d3svg = d3.select(svg)
             //.append("svg")
             .attr("preserveAspectRatio", "xMidYMid meet")
+            .attr("viewBox", `0 0 ${width} ${height}`)
 
         d3svg.append("svg:defs")
             .append("filter")
@@ -935,15 +982,76 @@ class Flow extends ElementGroup{
         
         return flowElement
     }
+    getFlowElementDimension(state){
+        switch (state) {
+            case 'active':
+                var width=this.active.width
+                var height=this.active.height
+                return {width,height}
+                break;
+        
+            default:
+                var width=this.clientWidth/6
+                var height=this.clientHeight/6
+                return {width,height}
+        }
+        
+    }
+    getFlowElementDimensionMinSeperation(){
+        var xminseperation=this.getFlowElementDimension().width*0.4
+        var yminseperation=this.getFlowElementDimension().height*0.2
+        return {xminseperation,yminseperation}
+    }
+    getFlowElementCoordinates(flowElement,state){
+        switch (state) {
+            case 'active':
+                var x=this.active.x
+                var y=this.active.y
+                return {x,y}
+                break;
+        
+            default:
+                var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(
+                    this.clientWidth,
+                    this.value.types.length,
+                    this.getFlowElementDimension().width,
+                    this.getFlowElementDimensionMinSeperation().xminseperation
+                )
+
+                var yEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(
+                    this.clientHeight,
+                    flowElement.siblings().length,
+                    this.getFlowElementDimension().height,
+                    this.getFlowElementDimensionMinSeperation().yminseperation
+                )
+
+                var xindex=this.value.types.indexOf(flowElement.type)
+                var yindex=flowElement.siblings().indexOf(flowElement)
+                        
+
+                var x=xEvenelySpaced.coordinates[xindex]
+                var y=yEvenelySpaced.coordinates[yindex]
+                return {x,y}
+        }
+        
+    }
+
+
+    //link two flowments
+    link(sourceFlowElement,destinationFlowElement){
+        var link=this.getLink(sourceFlowElement,destinationFlowElement)
+        sourceFlowElement.addOutLink(link)
+        destinationFlowElement.addInLink(link)
+    }
     //Create or use cached flowelement links
-    getLink(sourceFlowElementIndentifier,destinationFlowElementIndentifier) {
-        var link = this.link[sourceFlowElementIndentifier + "->" + destinationFlowElementIndentifier] 
+    getLink(sourceFlowElement,destinationFlowElement) {
+        var link = this.linkMap[sourceFlowElement.value.id + "->" + destinationFlowElement.value.id] 
         if(!link){
             link = this._svg.append("line")
                 //.style("stroke", "black")
                 .attr("stroke-width", 2)
                 .attr("marker-end", "url(#triangle-outline)")
-            this.link[sourceFlowElementIndentifier+ "->" + destinationFlowElementIndentifier] = link
+            this.linkMap[sourceFlowElement.value.id+ "->" + destinationFlowElement.value.id] = link
         }
         return link.node();
     }
@@ -953,8 +1061,7 @@ class Flow extends ElementGroup{
     }
 
     handleActive(event){
-        this.activeFlowElement=event.target; 
-        this.removeFlowElementEventListeners(this.activeFlowElement);        
+        this.removeFlowElementEventListeners(event.target);        
           
         [...this.shadowRoot.querySelector('slot').querySelectorAll(".flowElement:not(.active)")].forEach(notActiveFE=>{
             notActiveFE.hide()
@@ -968,8 +1075,7 @@ class Flow extends ElementGroup{
             notActiveFE.show()
             this.addFlowElementEventListeners(notActiveFE)
         })    
-        this.addFlowElementEventListeners(event.target)
-        this.activeFlowElement=null   
+        this.addFlowElementEventListeners(event.target)   
         document.addEventListener("keydown",this.handleKeyPressListner)
 
     }
@@ -991,8 +1097,9 @@ class Flow extends ElementGroup{
     }
 
     handleClose(){
-        if(this.activeFlowElement){
-            this.activeFlowElement.inactive()
+        var activeFlowElements=this.shadowRoot.querySelectorAll('.active')
+        if(activeFlowElements.length>0){
+            activeFlowElements.forEach(fu=>fu.inactive())
         }else{
             
             const changeEvent = new CustomEvent('switchflow', {
