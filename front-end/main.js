@@ -110,16 +110,16 @@ var design = new architecture.LogicDesign()
 var jsProcess=new architecture.Process('js','Process','process')
 //design.addProcess(jsProcess)
 
-design.addProcess(new architecture.Process('js','Process','process',['ui','ui2','ui3'],['database']))
-design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest',['process']))
-design.addOutput(new architecture.Output('outbound.rest2','Outbound2','outbound.rest2',['process']))
+design.addProcess(new architecture.Process('Process1','process1',['ui'],['database','src']))
+// design.addOutput(new architecture.Output('Outbound','outbound.rest',['process']))
+// design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process']))
 
 
 
 function add(i){
     // console.log(i)
-    // design.addOutput(new architecture.Output('outbound.rest'+i,'Outbound'+i,'outbound.rest'+i,['process']))
-    // if(i<4)
+    // design.addOutput(new architecture.Output('Outbound'+i,'outbound.rest'+i,['process']))
+    // if(i<10)
     // setTimeout(function(){
     //    add(i+1)
     // },100)
@@ -127,13 +127,15 @@ function add(i){
 
 add(3)
 
+design.addProcess(new architecture.Process('Process2','process2',['ui'],['database','src']))
+// design.addOutput(new architecture.Output('Outbound','outbound.rest',['process2']))
+// design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process2']))
 
-//design.addProcess(new architecture.Process('js','Process2','process2',['ui2'],['database']))
-// design.addOutput(new architecture.Output('outbound.rest','Outbound','outbound.rest2',['process2']))
-// design.addOutput(new architecture.Output('outbound.rest','Google','outbound.rest3',['process2']))
-// design.addOutput(new architecture.Output('outbound.rest','Facebook','outbound.rest4',['process2']))
-// design.addOutput(new architecture.Output('outbound.rest','Twitter','outbound.rest5',['process2']))
-// design.addInput(new architecture.Input('input.rest','Twitter','input.rest',['process2']))
+design.addProcess(new architecture.Process('Process3','process3',['ui'],['database','src']))
+// design.addOutput(new architecture.Output('Outbound','outbound.rest',['process3']))
+// design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process3']))
+
+
 const flow = Flow.getNewInstance();
 document.body.appendChild(flow)
 flow.value=design;

@@ -271,19 +271,25 @@ class FlowElement extends Element{
     }
 
     siblings(){
-        var previousSiblings=[...this.previous()].reduce((siblings,p)=>{
-            siblings=siblings.concat(p.next())
-            return siblings
-        },[])
-        var nextSiblings=[...this.next()].reduce((siblings,n)=>{
-            siblings=siblings.concat(n.previous())
-            return siblings
-        },[])
+        //Get all Previous Based Siblings
+        var previousSiblings=Array.from([...this.previous()].reduce((siblings,p)=>{
+            
+            return new Set([ ...siblings, ...p.next() ])
 
-        
+        },new Set()))
+
+        //Get all Next Based Siblings
+        var nextSiblings=Array.from([...this.next()].reduce((siblings,n)=>{
+            
+            return new Set([ ...siblings, ...n.previous() ])
+
+        },new Set()))
+
+        //Priority for next based siblings
         if(nextSiblings.length>0){
             return nextSiblings
         }
+
         if(previousSiblings.length>0){
             return previousSiblings
         }
@@ -408,7 +414,8 @@ class FlowElement extends Element{
                 return timeFraction;
             },
             draw: (progress)=>{                 
-                this.coordinates(this.parentFlow.active.x, this.parentFlow.active.y)
+                var {x,y}=this.parentFlow.getFlowElementCoordinates(this,'active')
+                this.coordinates(x, y)
             }
         });  
         this.updateView('active')
@@ -432,7 +439,8 @@ class FlowElement extends Element{
                 return timeFraction;
             },
             draw: (progress)=>{                 
-                this.coordinates(this.inactiveState.x,this.inactiveState.y,this.inactiveState.z)
+                var {x,y}=this.parentFlow.getFlowElementCoordinates(this)
+                this.coordinates(x, y)
             }
         });  
         
@@ -671,10 +679,7 @@ class Flow extends ElementGroup{
             this._svg=null
         }
 
-        this.active.width="60%",
-        this.active.height="60%"
-        this.active.x=this.clientWidth/2
-        this.active.y=this.clientHeight/2
+        
 
         var flowElement=document.querySelector('ui-flow-element')
         while(flowElement){
@@ -808,24 +813,8 @@ class Flow extends ElementGroup{
                     var nextFU = this.value.getFunctionalUnit(identifier)
                     var nextFUflowElement=this.getFlowElement(nextFU,true)
                     if (nextFU && nextFUflowElement) {                        
-                        this.link(flowElement,nextFUflowElement)
-                        //console.log(flowElement.type,' Previous of ',nextFUflowElement.type,"x"+nextFUflowElement.x)
-                        
-                        
-
-                        
-
-                        var currentFuAndSiblings=nextFUflowElement.previous()
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,currentFuAndSiblings.length,this.getFlowElementDimension().height,this.getFlowElementDimensionMinSeperation().yminseperation)
-                        currentFuAndSiblings.forEach((fe,i)=>{
-                            if(fe.isActive){
-                                return
-                            }
-                            //console.log(fe.type,'Dependent on',flowElement.type,'y'+coordinates[i])
-                            fe.dimensions(fe.width, divisionDimensions[i]);  
-                            fe.coordinates(fe.x,coordinates[i])
-                        })
-                        
+                        //this.link(flowElement,nextFUflowElement)
+                        this.link(nextFUflowElement,flowElement)                        
                     }
                 })
                  //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
@@ -833,29 +822,13 @@ class Flow extends ElementGroup{
                     var previousFU = this.value.getFunctionalUnit(identifier)
                     var previousFUflowElement=this.getFlowElement(previousFU,true)
                     if (previousFU && previousFUflowElement) {
-                        this.link(previousFUflowElement,flowElement)
-                        //console.log(flowElement.type,' Next of ',previousFUflowElement.type,"x"+xEvenelySpaced.coordinates[typeIndex])
-                        
-                        var currentFuAndSiblings=previousFUflowElement.next()
-
-                        var {coordinates,divisionDimensions}=FlowUtility.getEvenlySpacedFromCenter(height,currentFuAndSiblings.length,this.getFlowElementDimension().height,this.getFlowElementDimensionMinSeperation().yminseperation)
-                                
-                        currentFuAndSiblings.forEach((fe,i)=>{
-                            if(fe.isActive){
-                                return
-                            }
-                            //console.log(fe.type,'Dependent on',flowElement.type,"y"+coordinates[i])                            
-                            fe.dimensions(fe.width, divisionDimensions[i]);                                
-                            fe.coordinates(fe.x,coordinates[i])
-                        })
-                        
-                        
-                        
+                        //this.link(previousFUflowElement,flowElement)
+                        this.link(flowElement,previousFUflowElement) 
                     }
                 })
 
-                //Future improvisation
-                //flowElement.coordinates(this.getFlowElementCoordinates(flowElement).x,this.getFlowElementCoordinates(flowElement).y)
+                //Calculate and set coordinates 
+                flowElement.coordinates(this.getFlowElementCoordinates(flowElement).x,this.getFlowElementCoordinates(flowElement).y)
 
             });
 
@@ -883,7 +856,6 @@ class Flow extends ElementGroup{
     }
 
     getTypeIndex(type){
-        console.log('Processing',type)
         return this.types.indexOf(type)
     }  
 
@@ -985,8 +957,8 @@ class Flow extends ElementGroup{
     getFlowElementDimension(state){
         switch (state) {
             case 'active':
-                var width=this.active.width
-                var height=this.active.height
+                var width=this.active.width||"60%"                
+                var height=this.active.height||"60%"
                 return {width,height}
                 break;
         
@@ -1005,10 +977,10 @@ class Flow extends ElementGroup{
     getFlowElementCoordinates(flowElement,state){
         switch (state) {
             case 'active':
-                var x=this.active.x
-                var y=this.active.y
+                
+                var x=this.active.x||this.clientWidth/2
+                var y=this.active.y||this.clientHeight/2
                 return {x,y}
-                break;
         
             default:
                 var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(
