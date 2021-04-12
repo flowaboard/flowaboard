@@ -813,8 +813,8 @@ class Flow extends ElementGroup{
                     var nextFU = this.value.getFunctionalUnit(identifier)
                     var nextFUflowElement=this.getFlowElement(nextFU,true)
                     if (nextFU && nextFUflowElement) {                        
-                        //this.link(flowElement,nextFUflowElement)
-                        this.link(nextFUflowElement,flowElement)                        
+                        this.link(flowElement,nextFUflowElement)
+                        //this.link(nextFUflowElement,flowElement)                        
                     }
                 })
                  //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
@@ -822,8 +822,8 @@ class Flow extends ElementGroup{
                     var previousFU = this.value.getFunctionalUnit(identifier)
                     var previousFUflowElement=this.getFlowElement(previousFU,true)
                     if (previousFU && previousFUflowElement) {
-                        //this.link(previousFUflowElement,flowElement)
-                        this.link(flowElement,previousFUflowElement) 
+                        this.link(previousFUflowElement,flowElement)
+                        //this.link(flowElement,previousFUflowElement) 
                     }
                 })
 

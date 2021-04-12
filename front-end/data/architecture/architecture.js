@@ -206,7 +206,7 @@ class LogicDesign extends Design{
         
     }
     get types(){
-        return ['outputs','processes','inputs']
+        return ['inputs','processes','outputs']
     }
 }
 

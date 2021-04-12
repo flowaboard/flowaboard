@@ -110,7 +110,7 @@ var design = new architecture.LogicDesign()
 var jsProcess=new architecture.Process('js','Process','process')
 //design.addProcess(jsProcess)
 
-design.addProcess(new architecture.Process('Process1','process1',['ui'],['database','src']))
+design.addProcess(new architecture.Process('Process1','process1',['database','src'],['ui']))
 // design.addOutput(new architecture.Output('Outbound','outbound.rest',['process']))
 // design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process']))
 
@@ -127,11 +127,11 @@ function add(i){
 
 add(3)
 
-design.addProcess(new architecture.Process('Process2','process2',['ui'],['database','src']))
+design.addProcess(new architecture.Process('Process2','process2',['database','src'],['ui']))
 // design.addOutput(new architecture.Output('Outbound','outbound.rest',['process2']))
 // design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process2']))
 
-design.addProcess(new architecture.Process('Process3','process3',['ui'],['database','src']))
+design.addProcess(new architecture.Process('Process3','process3',['database','src'],['ui']))
 // design.addOutput(new architecture.Output('Outbound','outbound.rest',['process3']))
 // design.addOutput(new architecture.Output('Outbound2','outbound.rest2',['process3']))
 
