@@ -54,24 +54,6 @@ class FlowUtility{
         selfObserver.observe(element);
     }
 
-    static getEvenlySpacedFromCenter(totalValue,divisions,divisionLength,minseparation){
-        var coordinates=[]
-        var maxDivisionLengthPossible=totalValue/divisions;
-        var divisionLengthWithSeperation=divisionLength+2*(minseparation);
-        var wastageLength=maxDivisionLengthPossible-divisionLengthWithSeperation;
-        if(wastageLength>0){
-            var totalWastageLength=wastageLength*divisions
-            var requiredTotalValue=totalValue-totalWastageLength
-            for(var i=0;i<divisions;i++){
-                coordinates.push(totalWastageLength/2+(divisionLengthWithSeperation*i)+(divisionLengthWithSeperation*0.5))
-            }
-            return {coordinates,divisionLength}
-        }else{
-            divisionLength=maxDivisionLengthPossible-2*(minseparation)-20;
-            coordinates=FlowUtility.getEvenlySpacedFromCenter(totalValue,divisions,divisionLength,minseparation)
-            return {coordinates,divisionLength}
-        }
-    }
 
 }
 
@@ -219,10 +201,7 @@ class FlowElement extends Element{
         
 
     }
-    handleMouseDown(){
-        this.active()
-    }
-
+    
     handleAdd(e){
         console.log(e.value)
     }
