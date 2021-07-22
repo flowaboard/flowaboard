@@ -1,13 +1,19 @@
-import { Data } from '../data.js'
+import { Data } from '../../data/data.js'
 
 class Design extends Data{
     id;
-    description;    
+    description; 
+    label;
+    parentDesignId;   
     functionUnitMap;
-    constructor() {        
+    designElements=[]
+    constructor(label,id,description) {   
+             
         super()
         this.functionUnitMap = {}
-        
+        this.id=id;
+        this.description=description;
+        this.label=label;
     }
     
     getFunctionalUnit(id){
@@ -29,13 +35,26 @@ class Design extends Data{
             
         }else{
             this.functionUnitMap[functionalUnit.id]=functionalUnit
-            functionalUnit.designId=this.id;
+            functionalUnit.parentDesignId=this.id;
+            this.designElements.push(functionalUnit)
         }
         return this.functionUnitMap[functionalUnit.id]
     }
+    get types(){
+        return ['designElements']
+    }
+
+    _flowConfig;
+    get flowConfig(){
+        return this._flowConfig||{}
+    }
+    set flowConfig(flowConfig){
+        this._flowConfig=flowConfig||{}
+        this.publish('change') 
+    }
 }
 
-class FunctionUnit extends Data{
+class DesignElement extends Data{
     type;
     label;
     id;
@@ -44,9 +63,9 @@ class FunctionUnit extends Data{
     data;
     description;
     static instances=[];
-    constructor(type, label, id, designId) {
+    constructor(label,id,description, type, designId) {
         super()
-        this.type = type
+        this.type = type||'designElements'
         this.label = label
         this.id = id 
         this.designId = designId            
@@ -65,23 +84,23 @@ class FunctionUnit extends Data{
         childDesign=new Design(this.id,this.label,this.description) ;
         return childDesign
     }
-    update(functionUnit){
-        this.description=functionUnit.description
-        this.type=functionUnit.type
-        this.label=functionUnit.label
-        this.data=functionUnit.data;
-        this.designId=functionUnit.designId;
-        this.childDesign=functionUnit.childDesign;
+    update(DesignElement){
+        this.description=DesignElement.description
+        this.type=DesignElement.type
+        this.label=DesignElement.label
+        this.data=DesignElement.data;
+        this.designId=DesignElement.designId;
+        this.childDesign=DesignElement.childDesign;
     }
 }
 
 
 
 
-class Input extends FunctionUnit {
+class Input extends DesignElement {
     processIdentifiers;
-    constructor(label, id, processIdentifiers) {
-        super('inputs', label, id)
+    constructor(label,id,description, processIdentifiers) {
+        super( label,id,description ,'inputs')
         this.processIdentifiers = new Set(processIdentifiers)
     }
     next(){
@@ -93,12 +112,12 @@ class Input extends FunctionUnit {
     }
 
 }
-class Process extends FunctionUnit {
+class Process extends DesignElement {
     outputIdentifiers;
     inputIdentifiers;
 
-    constructor(label, id, inputIdentifiers, outputIdentifiers) {
-        super('processes', label, id)
+    constructor(label,id,description, inputIdentifiers, outputIdentifiers) {
+        super( label,id,description,'processes')
         this.inputIdentifiers = new Set(inputIdentifiers)
         this.outputIdentifiers = new Set(outputIdentifiers)
     }
@@ -129,10 +148,10 @@ class Process extends FunctionUnit {
         }
     }
 }
-class Output extends FunctionUnit {
+class Output extends DesignElement {
     processIdentifiers;
-    constructor(label, id, processIdentifiers) {
-        super('outputs', label, id)
+    constructor(label,id,description, processIdentifiers) {
+        super(label,id,description, 'outputs')
         this.processIdentifiers = new Set(processIdentifiers)
     }
 
@@ -151,8 +170,8 @@ class LogicDesign extends Design{
     outputs;
     processes;
 
-    constructor() {
-        super()
+    constructor(label,id,description) {
+        super(label,id,description)
         this.inputs = []
         this.outputs = []
         this.processes = []
@@ -193,12 +212,12 @@ class LogicDesign extends Design{
 
         Array.from([...process.inputIdentifiers])
             .filter(inputIdentifier => !this.getFunctionalUnit(inputIdentifier))
-            .map(inputIdentifier => new Input(inputIdentifier, inputIdentifier, [process.id]))
+            .map(inputIdentifier => new Input(inputIdentifier, inputIdentifier,inputIdentifier, [process.id]))
             .forEach(input => this.addInput(input))
 
         Array.from([...process.outputIdentifiers])
             .filter(outputIdentifier => !this.getFunctionalUnit(outputIdentifier))
-            .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier, [process.id]))
+            .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier,outputIdentifier, [process.id]))
             .forEach(output => this.addOutput(output))
         
         super.add(process)
@@ -210,6 +229,20 @@ class LogicDesign extends Design{
     }
 }
 
+class EquationDesign extends LogicDesign{
+    
+}
 
 
-export {LogicDesign,Design,Input,Output,Process,FunctionUnit}
+class ListDesign extends Design{
+
+}
+
+const FlowDesigns={
+    LogicDesign,
+    ListDesign,
+    EquationDesign
+}
+
+
+export {FlowDesigns,Design,Input,Output,Process,DesignElement}

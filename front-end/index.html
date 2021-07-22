@@ -1,13 +1,28 @@
-
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Connect divs with SVG</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <link rel="stylesheet" type="text/css" href="@fortawesome/fontawesome-free/css/all.min.css">
-  <body>   
-    <script src="https://cdn.jsdelivr.net/npm/esprima@4.0.1/dist/esprima.min.js"></script>
-    <script src="main.js" type="module"></script>
-  </body>
-                  
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Connect divs with SVG</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="@fortawesome/fontawesome-free/css/all.min.css">
+
+<body>
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' },
+      startup: {
+        ready: function () {
+          MathJax.startup.defaultReady();
+          document.getElementById('render').disabled = false;
+        }
+      }
+    }
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/esprima@4.0.1/dist/esprima.min.js"></script>
+  <script src="main.js" type="module"></script>
+</body>
+
 </html>
