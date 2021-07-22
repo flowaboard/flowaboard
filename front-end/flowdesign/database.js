@@ -1,9 +1,12 @@
-import { FunctionUnit } from './architecture.js'
+import { DesignElement } from './design.js'
 
-class Database extends FunctionUnit{
+
+
+class Database extends DesignElement {
     constructor(label, uniqueIdentifier, processIdentifiers) {
         super('Database', label, uniqueIdentifier)
         this.processIdentifiers = new Set(processIdentifiers)
     }
 }
-export {Database}
+
+export { Database }

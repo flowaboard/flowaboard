@@ -1,8 +1,8 @@
-import { FunctionUnit } from './architecture.js'
-import { Builder } from '../../ui/builder/builder.js'
-import { ElementSelection } from '../../ui/builder/element-selection.js';
+import { DesignElement } from './design.js'
+import { Builder } from '../ui/builder/builder.js'
+import { ElementSelection } from '../ui/builder/element-selection.js';
 
-class UI extends FunctionUnit{
+class UI extends DesignElement{
     constructor(type,label, uniqueIdentifier, processIdentifiers) {
         super('UI', label, uniqueIdentifier)
         this.processIdentifiers = new Set(processIdentifiers)

@@ -5,38 +5,53 @@ import '../../../node_modules/d3/dist/d3.js'
 import { Next } from '../element-group/next.js'
 //import '../../node_modules/d3-3d/src/3d.js'
 
-
-import * as architecture from '../../data/architecture/architecture.js';
-
 class FlowUtility{
 
-    static getEvenlySpaced(length){
-        var evenlySpaced=[]
-        if(length==1){
-            //console.log(0,0)
-            evenlySpaced.push(0)
-        }
-        if(length%2==0){
-            //console.log('even')
-            for(var j=0;j<length;j++){
-                if(j<length/2){
-                    //console.log(j,Math.trunc(j+1-(i)/2)-1)
-                    evenlySpaced.push(Math.trunc(j+1-(length)/2)-1)
-                }
-                if(j>=length/2){
-                    //console.log(j,Math.trunc(j+1-(i)/2))
-                    evenlySpaced.push(Math.trunc(j+1-(length)/2))
-                }  
+
+    static getEvenlySpacedFromCenter(totalDivisonAvailable,divisonElements,divisonElementDimension,minseparation){
+        var coordinates=[],divisonElementDimensions=[]
+        //Calculate Max possible div dimension
+        var maxdivisonDimensionPossible=totalDivisonAvailable/divisonElements;
+
+        //Calculation Divison Dimesion required with margins on both sides
+        var divisonDimensionWithSeperation=divisonElementDimension+2*(minseparation);
+
+        //Calculate Left over  divison not occupying dimension
+        var leftOverDivisonFreeDimension=maxdivisonDimensionPossible-divisonDimensionWithSeperation;
+
+        //Calculate Total Left over  divison not occupying dimension
+        var totalleftOverDivisonFreeDimension=leftOverDivisonFreeDimension*divisonElements
+        if(leftOverDivisonFreeDimension>0){
+            
+            var requiredTotalValue=totalDivisonAvailable-totalleftOverDivisonFreeDimension
+            for(var i=0;i<divisonElements;i++){
+                var x=totalleftOverDivisonFreeDimension/2+(divisonDimensionWithSeperation*i)+(divisonDimensionWithSeperation*0.5)
+                coordinates.push(x)
+                divisonElementDimensions.push(divisonElementDimension)
             }
+            return {coordinates,divisonElementDimensions}
+        }else{
+            //Decrease divison element dimension less then max divison 
+            divisonElementDimension=maxdivisonDimensionPossible-2*(minseparation/2)-1;//-1 for imax depth issue
+
+            //Recalculate Coordinates based on new divison value
+            return FlowUtility.getEvenlySpacedFromCenter(totalDivisonAvailable,divisonElements,divisonElementDimension,minseparation/2)
         }
-        if(length!=1&&length%2==1){
-            //console.log('odd')
-            for(j=0;j<length;j++){
-                //console.log(i,j,(j)-((i-1)/2))
-                evenlySpaced.push((j)-((length-1)/2))
-            }
-        }
-        return evenlySpaced;
+    }
+
+    static subscribeResize(element,callback){
+        var selfObserver = new ResizeObserver(entries => {
+            entries.forEach(entry => {
+                
+                callback(event)
+                // console.log(entry.target)
+                // console.log('width', entry.contentRect.width);
+                // console.log('height', entry.contentRect.height);
+                // console.log('x',entry.contentRect.top)
+                // console.log('y',entry.contentRect.bottom)
+            });
+        });
+        selfObserver.observe(element);
     }
 
     static getEvenlySpacedFromCenter(totalValue,divisions,divisionLength,minseparation){
@@ -163,6 +178,8 @@ class FlowElement extends Element{
     }
 
     attachEventHandlers(){
+        FlowUtility.subscribeResize(this,this.handleResize.bind(this))
+        
         this.shadowRoot.querySelector('.add-previous').onclick = this.handleAdd.bind(this);
         this.shadowRoot.querySelector('.add-next').onclick = this.handleAdd.bind(this);
 
@@ -190,12 +207,9 @@ class FlowElement extends Element{
         this.removeEventListener("mouseleave",  this.handleMouseLeave);
         this.removeEventListener("transitionend",  this.handleTransitionEnd);
         this.removeEventListener("animationend",  this.handleAnimationEnd);
-    }  
-    handleAdd(e){
-        console.log(e.value)
     }
     handleValueChange(){
-        this._value='';//this.shadowRoot.querySelector('input').value
+        //this._value='';//this.shadowRoot.querySelector('input').value
         const changeEvent = new CustomEvent('change', {
             bubbles: true,
             composed:true,
@@ -209,17 +223,61 @@ class FlowElement extends Element{
         this.active()
     }
 
+    handleAdd(e){
+        console.log(e.value)
+    }
+    
+    //Event Handlers
+    handleMouseDown(){
+        this.handleAction('click')
+    }
     handleMouseEnter(){
-        this.focus()      
+        this.handleAction('hover')     
     }
     handleMouseLeave(){
-        this.blur()       
+        this.handleAction('blur')    
     }
     handleTransitionEnd(){
         this.updateLink()
     }
     handleAnimationEnd(){
         this.updateLink()
+    }
+    handleResize(){
+        //console.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
+         
+        this.coordinates(this.x,this.y,this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
+        
+        
+        this.updateLink(true)//Updates Links on window or element resize
+    }
+
+    //Event to Action Converter
+    handleAction(event){
+        const action=this.parentFlow.config.action[event]
+        switch (action) {
+            case 'active':
+                this.active()
+                break;
+            case 'focus':
+                this.focus()
+                break;
+            case 'blur':
+                this.blur()
+                break;
+            case 'hide':
+                this.hide()
+                break;
+            case 'show':
+                this.show()
+                break;
+            case 'flow':
+                this.flow()
+                break;
+                
+            default:
+                break;
+        }
     }
 
     width;
@@ -232,7 +290,8 @@ class FlowElement extends Element{
 
         this.style.width=width;
         this.style.height=height;
-
+        
+        //console.log("Set Dimenions",width,height)
         if(!this.isActive)
         this.inactiveState={...this.inactiveState,...{
             width:width,
@@ -247,10 +306,11 @@ class FlowElement extends Element{
         this.y=y
         this.z=z
 
+        // this.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)` //Has challenge to really make it independent of other transform css 
         this.style.left=x-this.getBoundingClientRect().width/2;//center the component
         this.style.top=y-this.getBoundingClientRect().height/2;//center the component;
 
-        //console.log(this.style.left,x-this.getBoundingClientRect().width)
+        //console.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
 
         if(this.style.top>this.parentFlow.height/2)
         this.style.transformOrigin="left center"
@@ -270,6 +330,32 @@ class FlowElement extends Element{
         return [...this.inLinks].map((link)=>link.tailFlowElement)
     }
 
+    siblings(){
+        //Get all Previous Based Siblings
+        var previousSiblings=Array.from([...this.previous()].reduce((siblings,p)=>{
+            
+            return new Set([ ...siblings, ...p.next() ])
+
+        },new Set()))
+
+        //Get all Next Based Siblings
+        var nextSiblings=Array.from([...this.next()].reduce((siblings,n)=>{
+            
+            return new Set([ ...siblings, ...n.previous() ])
+
+        },new Set()))
+
+        //Priority for next based siblings
+        if(nextSiblings.length>0){
+            return nextSiblings
+        }
+
+        if(previousSiblings.length>0){
+            return previousSiblings
+        }
+        return []
+    }
+
     inLinks=new Set();
     outLinks=new Set();
     addInLink(link){
@@ -283,17 +369,25 @@ class FlowElement extends Element{
         this.updateLinkTail()
     }
 
-    updateLink(){
-        this.animate({
-            duration: 600,
-            timing: function(timeFraction) {
-                return timeFraction;
-            },
-            draw: (progress)=>{                
-                this.updateLinkHead();
-                this.updateLinkTail();
-            }
-        });
+    updateLink(once){
+        if(once){
+            //this.coordinates(this.x,this.y,this.z)// to update width based calculation
+            this.updateLinkHead();
+            this.updateLinkTail();
+        }else{
+            this.animate({
+                duration: 600,
+                timing: function(timeFraction) {
+                    return timeFraction;
+                },
+                draw: (progress)=>{ 
+                    //this.coordinates(this.x,this.y,this.z)// to update width based calculation              
+                    this.updateLinkHead();
+                    this.updateLinkTail();
+                    //console.log('updateLink')
+                }
+            });
+        }
     }
 
     updateLinkHead(){
@@ -307,7 +401,7 @@ class FlowElement extends Element{
             var y2 = this.getBoundingClientRect().y;
             var width2=this.getBoundingClientRect().width;
             var height2=this.getBoundingClientRect().height;
-            link.setAttribute("x2", x2-8);
+            link.setAttribute("x2", x2+(isEven?(-8):(-6)));
             link.setAttribute("y2", (y2 + height2 / 2)+(inLinksSize==1?0:10*(i+1-inlinkCenter))+(isEven?(-5):0));
         })
     }
@@ -326,6 +420,7 @@ class FlowElement extends Element{
         })
     }
 
+    //Flow Element State handlers
     focus(){
         //this.style.transformOrigin="left center"
         this.classList.add('focus')
@@ -345,11 +440,21 @@ class FlowElement extends Element{
     }
     focusNext(index){
         this.blur();
-        this.next()[index].focus()
+        var nextByIndex=this.next()[index]
+        if(nextByIndex){
+            nextByIndex.focus()
+        }else{
+            this.flow()
+        }
     }
     focusPrevious(index){
         this.blur();
-        this.previous()[index].focus()
+        var previousByIndex=this.previous()[index]
+        if(previousByIndex){
+            previousByIndex.focus()
+        }else{
+            this.flow()
+        }
     }
 
     inactiveState={}
@@ -360,15 +465,16 @@ class FlowElement extends Element{
         this.removeInactiveEventHandlers()
         this.isActive=true
         this.classList.add("active")
-        
-        this.dimensions( this.parentFlow.active.width,this.parentFlow.active.height)
+        var {width,height}=this.parentFlow.getFlowElementDimension('active')
+        this.dimensions( width,height)
         this.animate({
             duration: 600,
             timing: function(timeFraction) {
                 return timeFraction;
             },
             draw: (progress)=>{                 
-                this.coordinates(this.parentFlow.active.x, this.parentFlow.active.y)
+                var {x,y}=this.parentFlow.getFlowElementCoordinates(this,'active')
+                this.coordinates(x, y)
             }
         });  
         this.updateView('active')
@@ -392,7 +498,8 @@ class FlowElement extends Element{
                 return timeFraction;
             },
             draw: (progress)=>{                 
-                this.coordinates(this.inactiveState.x,this.inactiveState.y,this.inactiveState.z)
+                var {x,y}=this.parentFlow.getFlowElementCoordinates(this)
+                this.coordinates(x, y)
             }
         });  
         
@@ -403,22 +510,6 @@ class FlowElement extends Element{
         this.dispatchEvent(event);
         
     }
-
-    currentView
-    updateView(state){
-        
-        const content=this.value.getUi(state)
-        if(content && this.currentView){
-            this.shadowRoot.replaceChild(content,this.currentView)  
-            this.currentView=content
-        }else{            
-            this.render()
-            this.currentView=this.shadowRoot.querySelector('.content')
-        }
-        
-
-    }
-
     hide(){
         this.removeInactiveEventHandlers()
         this.classList.add('hidden');
@@ -435,6 +526,27 @@ class FlowElement extends Element{
         })
         this.updateLink()
     }
+    flow(){
+        var event = new CustomEvent("switchflow");
+        this.dispatchEvent(event);
+    }
+
+
+    currentView
+    updateView(state){
+        
+        const content=this.value.getUi(state)
+        if(content && this.currentView){
+            this.shadowRoot.replaceChild(content,this.currentView)  
+            this.currentView=content
+        }else{            
+            this.render()
+            this.currentView=this.shadowRoot.querySelector('.content')
+        }
+        
+
+    }
+    //Utilities    
     animate({duration, draw, timing}) {
 
         let start = performance.now();
@@ -462,36 +574,113 @@ Element.register('ui-flow-element', FlowElement);
 
 
 class Flow extends ElementGroup{
-    tags=['processes','inputs','outputs']
-    link={}
-    myObserver;
-    active={}
+    //To cache fe for each fu 
+    fufemap=new WeakMap()
+    //To cache all links
+    linkMap={}
+    
+
+    config={
+        active:{},
+        defaultValue:{
+            widthfactor:6,
+            heightfactor:6
+        },
+        action:{
+            'click':'active',
+            'hover':'focus',
+            'blur':'blur',
+            'left-key':'previous',
+            'right-key':'next',
+            'down-key':'sibling-based-on-previous'
+        }
+    }
     constructor() {
-        super();        
+        super(); 
+        
+        
         this.handleActiveListner = this.handleActive.bind(this)
         this.handleInactiveListner = this.handleInactive.bind(this)
         this.handleFocusListner = this.handleFocus.bind(this)
+        this.handleSVGResizeListner = this.handleSVGResize.bind(this)
+        this.handleKeyPressListner = this.handleKeyPress.bind(this)
+        this.handleSwitchListner=this.handleSwitch.bind(this)
+        
+        
         
     }
     get CSS(){
         return `
-        :host {
+        :host,:host(.relative) {
             display: block;
-            height:100%;
+            height:60%;
+            width: 80%;
             transform-style: preserve-3d;
+            overflow:hidden;            
+            position: relative;
         }
-        #svg{
-            width:100%;
-            height: 100%;
-        }
+
+        :host(.flex){
+            position: relative;
+            width: 100%;
+            height: calc(100% - 5rem);
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            flex-wrap: wrap;
+            overflow: auto;
+            padding-top: 5rem;
+            padding-left: 3rem;
+            padding-right: 3rem;
+            top: 0;        
+        }        
+        
         svg{
             height: 100%;
+        }
+        :host(.flex) svg{
+            display:none
         }
         
         .flowElement{
             
             position:absolute;            
-            transition: all 300ms;
+            transition: all 200ms;
+        }
+
+        :host(.flex) .flowElement{
+            position:initial; 
+            margin: 1rem;
+            z-index:10;
+        }
+        @media screen and (max-width: 480px) {
+            :host{
+                font-size:32px
+            }
+            .flowElement{                
+                min-width: 25rem;
+            }
+        }
+        @media screen and (min-width: 480px) {
+            :host{
+                font-size:16px
+            }
+            .flowElement{                
+                min-width: 15rem;
+                min-height: 10rem;
+            }
+        }
+        :host(.flex) .flowElement.active {
+            max-width: unset;
+            min-width: unset;
+            flex: auto;
+            position:absolute; 
+        }
+
+        
+
+        :host .flowElement.active,:host(.flex) .flowElement.active {
+            z-index:11
         }
         
         .flowElement:not(.active){
@@ -500,10 +689,11 @@ class Flow extends ElementGroup{
             transform: scale(1);            
             -webkit-filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
             filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+            box-shadow: 1px 2px 5px 0px #05677d;
         }
 
         .flowElement:not(.active).focus {            
-            transform: scale(1.5);
+            transform: scale(1.2);
             -background-color: #185765;
             z-index:100;
             
@@ -521,6 +711,7 @@ class Flow extends ElementGroup{
         
         svg line{
             transition: all 300ms;
+            stroke: #e87884;
         }
         svg line.hidden {
            visibility:visible;
@@ -528,48 +719,69 @@ class Flow extends ElementGroup{
            ttransform: scale(0.8); 
                     
         }
+
+        svg line, svg marker>path{
+            stroke: #171515;
+        }
         
         
         
         .button {
             background-color: #96b4ce40;
             border: none;
-            color: black;
-            padding: 10px 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            margin: 4px 2px;
             cursor: pointer;
             border-radius: 4px;
             color: #1a73e8;
-            box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 2px 6px 2px rgb(60 64 67 / 15%);
-            font: 500 14px Google Sans,Noto Sans,Noto Sans JP,Noto Sans KR,Noto Naskh Arabic,Noto Sans Thai,Noto Sans Hebrew,Noto Sans Bengali,sans-serif;
-            letter-spacing: .6px;
-            line-height: 24px;
-            padding: 6px 24px;
+            box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 2px 6px 2px rgb(60 64 67 / 15%);        
             pointer-events: auto;
             text-transform: none;
             text-decoration: none;
+            
             -webkit-transition: -webkit-transform .3s ease-in-out;
             transition: -webkit-transform .3s ease-in-out;
             transition: transform .3s ease-in-out;
             transition: transform .3s ease-in-out,-webkit-transform .3s ease-in-out;
             -webkit-transform: scale(1);
             transform: scale(1);
+
+            line-height: 1rem;
+            margin: 0.5rem;
+            margin-right:2rem;
+            padding: 0.5rem 1rem;
         }
         
         .button:hover {
             background-color: #f1f1f1;
         }
         .actions{
-            position: fixed;
+            position: absolute;
             bottom: 0;
-            width: 100%;
+            right: 0;
             display: flex;
             justify-content: flex-end;
-            height:3em;
+            height:3rem;
             z-index: 1000;
+        }
+        @media screen and (min-width: 480px) {
+            .actions{
+                height: 9rem;
+            }
+            .button{
+
+            }
+        }
+
+        @media screen and (min-width: 480px) {
+            .actions{
+                height: 3rem;
+            }
+        }
+
+        :host(.flex) .actions{
+            position: fixed;
         }
         .bbutton:not(:hover) {
             display: none;
@@ -583,12 +795,7 @@ class Flow extends ElementGroup{
     }
     get HTML(){
         return `
-            <slot style="
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: block;
-            ">
+            <slot>
                 <svg></svg>
             </slot>
             <slot name="actions">
@@ -599,39 +806,59 @@ class Flow extends ElementGroup{
         `
     }
     attachEventHandlers(){
-        document.body.onresize = this.handleSVGResize.bind(this)
+        window.addEventListener("resize",this.handleSVGResizeListner)           
+        document.addEventListener("keydown",this.handleKeyPressListner)
           
-        this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);        
-        document.onkeydown = (e)=>{this.checkKey(e)};
-        this.myObserver = new ResizeObserver(entries => {
-            entries.forEach(entry => {
-                // console.log('width', entry.contentRect.width);
-                // console.log('height', entry.contentRect.height);
-                // console.log('x',entry.contentRect.top)
-                // console.log('y',entry.contentRect.bottom)
-            });
-        });
+        this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);  
+        
+    }
+    removeEventHandlers(){
+        window.removeEventListener("resize",this.handleSVGResizeListner)           
+        document.removeEventListener("keydown",this.handleKeyPressListner)
+             
     }
     afterRender(){
+        var flowConfig=this.value.flowConfig||{}
+        var action={...this.config.action,...flowConfig.action||{}}
+        var defaultValue={...this.config.defaultValue,...flowConfig.defaultValue||{}}
+        this.config={...this.config,...flowConfig,action,defaultValue}
+
+        if(this.config.flex){
+            this.classList.add('flex')
+        }else{
+            this.classList.remove('flex')
+        }
+
+        this.linkMap={}
+        this.fufemap=new WeakMap()
+        this.config.active={}
+        if(this._svg){
+            this._svg.node().remove(); 
+            this._svg=null
+        }
+
         
-        this.active.width="60%",
-        this.active.height="60%"
-        this.active.x=this.clientWidth/2
-        this.active.y=this.clientHeight/2
+
+        var flowElement=document.querySelector('ui-flow-element')
+        while(flowElement){
+            flowElement.remove()
+            flowElement=document.querySelector('ui-flow-element')
+        }
 
         if(this.value){
             this.updateSVG()         
         }else{
 
         }
-    }  
-    
-    handleValueChange(e){
-        this.updateSVG() 
     }
+   
     
-    checkKey(e) {
+    update(){
+       this.updateSVG()  
+    }
 
+    handleKeyPress(e) {
+        console.log(e)
         e = e || window.event;
         if (e.keyCode == '13') {
             this.setActiveByEnterKey()
@@ -660,8 +887,8 @@ class Flow extends ElementGroup{
     focusFEByKeyBoard(dir){
         var focused=this.shadowRoot.querySelector('.focus')
         if(!focused){
-            this.shadowRoot.querySelector('.'+this.tags[0]).focus()
-
+            this.shadowRoot.querySelector('.'+this.value.types[0]).focus()
+            return;
         }
         switch (dir) {
             case 'RIGHT':
@@ -687,7 +914,7 @@ class Flow extends ElementGroup{
             default:
                 this._focusByKeyBoardDir=0;
                 this._focusByKeyBoardIndex=0;
-                this.shadowRoot.querySelector('.'+this.tags[0]).focus()
+                this.shadowRoot.querySelector('.'+this.value.types[0]).focus()
                 break;
         }
         
@@ -697,19 +924,115 @@ class Flow extends ElementGroup{
         focused.active()
     }
 
-    handleClose(){
-        this.activeFlowElement.inactive()
-    }   
+    
       
+    
+
+    //Update flowElments and their links
+    async updateSVG() {
+        
+        const width = this.clientWidth
+        const height = this.clientHeight
+
+
+
+        this.getFlowElementDimension().height = this.clientHeight/6
+
+        var container = this.getContainer(this.clientWidth,this.clientHeight)
+
+
+        this.performanceStart(`Processing flowElements took`)
+
+        
+        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.value.types.length,this.getFlowElementDimension().width,this.getFlowElementDimensionpadding().xpadding)
+
+        
+        this.typesToRender.forEach((type)=>{
+            this.performanceStart(`Processing flowElements took for ${type}`)
+
+            var typeIndex=this.getTypeIndex(type)           
+            this.value[type].forEach((DesignElement, functionUnitIndex) => {
+                var flowElement = this.getFlowElement(DesignElement)
+                
+                if(flowElement.isActive){
+                    return
+                }
+                
+                
+                flowElement.dimensions(xEvenelySpaced.divisonElementDimensions[typeIndex], this.getFlowElementDimension().height);
+                // /flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
+                console.log(flowElement.type,'Direct',xEvenelySpaced.coordinates[typeIndex],xEvenelySpaced.divisonElementDimensions[typeIndex],flowElement.getBoundingClientRect().x)
+                
+                
+                flowElement.classList.add(type)
+
+                var fuNexts=Array.from([...DesignElement.next()])
+                var fuPreviouses=Array.from([...DesignElement.previous()])
+
+                //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
+                fuNexts.forEach(identifier => {
+                    var nextFU = this.value.getFunctionalUnit(identifier)
+                    var nextFUflowElement=this.getFlowElement(nextFU,true)
+                    if (nextFU && nextFUflowElement) {                        
+                        this.link(flowElement,nextFUflowElement)
+                        //this.link(nextFUflowElement,flowElement)                        
+                    }
+                })
+                 //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
+                fuPreviouses.forEach(identifier => {
+                    var previousFU = this.value.getFunctionalUnit(identifier)
+                    var previousFUflowElement=this.getFlowElement(previousFU,true)
+                    if (previousFU && previousFUflowElement) {
+                        this.link(previousFUflowElement,flowElement)
+                        //this.link(flowElement,previousFUflowElement) 
+                    }
+                })
+
+                //Calculate and set coordinates 
+                flowElement.coordinates(this.getFlowElementCoordinates(flowElement).x,this.getFlowElementCoordinates(flowElement).y)
+
+            });
+
+            this.performanceEnd(`Processing flowElements took for ${type}`)
+ 
+            
+        })
+
+        this.performanceEnd(`Processing flowElements took`)
+
+
+    }
+
+    order='right-to-left'||'left-to-right'||'center'
+    get typesToRender(){
+        if(this.order=='left-to-right')
+            return [...this.types,this.types[0]]
+        else if(this.order=='right-to-left')
+            return [...this.types.reverse(),this.types[this.types.length-1],...this.types.reverse(),this.types[this.types.length-1]]
+        else
+            return [...this.types,this.types[0]]
+    }
+    get types(){
+        return this.value.types
+    }
+
+    getTypeIndex(type){
+        return this.types.indexOf(type)
+    }  
+
+    
     //Create SVG Container
-    createSVG() {
+    getContainer(width,height) {
         if(this._svg){
+            
+            this._svg.attr("viewBox", `0 0 ${width} ${height}`)
             return this._svg
         }
         var svg = this.shadowRoot.querySelector('svg')
         var d3svg = d3.select(svg)
             //.append("svg")
             .attr("preserveAspectRatio", "xMidYMid meet")
+            .attr("viewBox", `0 0 ${width} ${height}`)
 
         d3svg.append("svg:defs")
             .append("filter")
@@ -729,7 +1052,7 @@ class Flow extends ElementGroup{
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M 0 0 L 10 5 L 0 10 z")
-            .style("fill", "black");
+            //.style("fill", "black");
 
         
 
@@ -742,7 +1065,7 @@ class Flow extends ElementGroup{
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M 0 -5 10 10")
-            .style("stroke", "black");
+            //.style("stroke", "black");
 
         // svg.call(d3.zoom()
         //     .extent([[0, 0], [width, height]])
@@ -770,107 +1093,20 @@ class Flow extends ElementGroup{
         this._svg = d3svg
         return this._svg
     }
-
-    //Update flowElments and their links
-    async updateSVG() {
-        if(this.activeFlowElement){            
+    //Create or use cached flowelements
+    getFlowElement(DesignElement,avoidCreation) {
+        if(this.fufemap.has(DesignElement)){
+            return this.fufemap.get(DesignElement)
+        }
+        if(avoidCreation){
             return
         }
-
-        const width = this.clientWidth
-        const height = this.clientHeight
-
-
-
-        this.flowElementWidth = this.clientWidth/6
-        this.flowElementHeight = this.clientHeight/6
-
-        var svg = this.createSVG()
-        svg.attr("viewBox", `0 0 ${width} ${height}`)
-
-
-        var startTime=performance.now()
-
-        
-            
-        const xoffset = (width / 2)
-        var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(width,this.tags.length,this.flowElementWidth,this.flowElementWidth*0.4)
-
-        this.tags.forEach((tag,tagIndex)=>{
-            var evenlySpaced=FlowUtility.getEvenlySpaced(this.value[tag].length);
-            
-            this.value[tag].forEach((functionUnit, functionUnitIndex) => {
-                var flowElement = this.getFlowElement(functionUnit)
-                flowElement.dimensions(xEvenelySpaced.divisionLength, this.flowElementHeight);
-                flowElement.coordinates(xEvenelySpaced.coordinates[1],(height / 2))
-                flowElement.basedOnELment=flowElement.basedOnELment||this
-                flowElement.classList.add(tag)
-                this.myObserver.observe(flowElement);
-
-                //Create FE for Each next FU
-                Array.from([...functionUnit.next()]).forEach(identifier => {
-                    var nextFU = this.value.getFunctionalUnit(identifier)
-                    if (nextFU && nextFU.flowElement) {
-                        var link = this.getLink(functionUnit.id, identifier)
-                        flowElement.addOutLink(link)
-                        nextFU.flowElement.addInLink(link)
-                        if(tagIndex!=0){
-                            var previouses=nextFU.flowElement.previous()
-                            var {coordinates,divisionLength}=FlowUtility.getEvenlySpacedFromCenter(height,previouses.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                            previouses.forEach((fe,i)=>{
-                                fe.basedOnELment=flowElement
-                                fe.dimensions(xEvenelySpaced.divisionLength, divisionLength);  
-                                fe.coordinates(xEvenelySpaced.coordinates[0],coordinates)
-                            })
-                        }
-                    }
-                })
-                //Create FE for Each previous FU
-                Array.from([...functionUnit.previous()]).forEach(identifier => {
-                    var previousFU = this.value.getFunctionalUnit(identifier)
-                    if (previousFU && previousFU.flowElement) {
-                        var link = this.getLink(identifier,functionUnit.id)
-                        flowElement.addInLink(link)
-                        previousFU.flowElement.addOutLink(link)
-
-                        if(tagIndex!=0){
-                            var nexts=previousFU.flowElement.next()
-
-                            var {coordinates,divisionLength}=FlowUtility.getEvenlySpacedFromCenter(height,nexts.length,this.flowElementHeight,this.flowElementHeight*0.2)
-                                 
-                            nexts.forEach((fe,i)=>{
-                                fe.basedOnELment=flowElement
-                                fe.dimensions(xEvenelySpaced.divisionLength, divisionLength);                                
-                                fe.coordinates(xEvenelySpaced.coordinates[2],coordinates[i])
-                            })
-                        }
-                    }
-                })
-            });
-        })
-
-        console.warn(`Processing flowElements took ${performance.now() - startTime}ms`);
-
-
-
-
-
-    }
-
-
-    handleSVGResize() {
-        this.updateSVG()        
-    }
-
-    //Create or use cached flowelements
-    getFlowElement(functionUnit) {
-        if(functionUnit.flowElement){
-            return functionUnit.flowElement
-        }
         var flowElement=document.createElement('ui-flow-element')
-        flowElement.type=functionUnit.type
-        flowElement.value=functionUnit
-        functionUnit.flowElement=flowElement;
+
+        this.fufemap.set(DesignElement,flowElement)
+
+        flowElement.type=DesignElement.type
+        flowElement.value=DesignElement
         flowElement.parentFlow=this
 
         this.shadowRoot.querySelector('slot').append(flowElement)
@@ -879,30 +1115,93 @@ class Flow extends ElementGroup{
         
         return flowElement
     }
+    getFlowElementDimension(state){
+        switch (state) {
+            case 'active':
+                var width=this.config.active.width||"60%"                
+                var height=this.config.active.height||"60%"
+                return {width,height}
+                break;
+        
+            default:
+                var width=this.config.defaultValue.width||this.clientWidth/(this.config.defaultValue.widthfactor||6)
+                var height=this.config.defaultValue.height||this.clientHeight/(this.config.defaultValue.heightfactor||6)
+                return {width,height}
+        }
+        
+    }
+    getFlowElementDimensionpadding(){
+        var xpadding=this.getFlowElementDimension().width*(this.config.defaultValue.xPadding||0.4)
+        var ypadding=this.getFlowElementDimension().height*(this.config.defaultValue.yPadding||0.2)
+        return {xpadding,ypadding}
+    }
+    getFlowElementCoordinates(flowElement,state){
+        switch (state) {
+            case 'active':
+                
+                var x=this.config.active.x||this.clientWidth/2
+                var y=this.config.active.y||this.clientHeight/2
+                return {x,y}
+        
+            default:
+                var xEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(
+                    this.clientWidth,
+                    this.value.types.length,
+                    this.getFlowElementDimension().width,
+                    this.getFlowElementDimensionpadding().xpadding
+                )
+
+                var siblings=this.shadowRoot.querySelectorAll('.'+flowElement.type)//flowElement.siblings()//Have to find most scalable way
+                var yEvenelySpaced=FlowUtility.getEvenlySpacedFromCenter(
+                    this.clientHeight,
+                    siblings.length,
+                    this.getFlowElementDimension().height,
+                    this.getFlowElementDimensionpadding().ypadding
+                )
+
+                var xindex=this.value.types.indexOf(flowElement.type)
+                var yindex=[...siblings].indexOf(flowElement)
+                        
+
+                var x=xEvenelySpaced.coordinates[xindex]
+                var y=yEvenelySpaced.coordinates[yindex]
+                return {x,y}
+        }
+        
+    }
+
+
+    //link two flowments
+    link(sourceFlowElement,destinationFlowElement){
+        var link=this.getLink(sourceFlowElement,destinationFlowElement)
+        sourceFlowElement.addOutLink(link)
+        destinationFlowElement.addInLink(link)
+    }
     //Create or use cached flowelement links
-    getLink(sourceFlowElementIndentifier,destinationFlowElementIndentifier) {
-        var link = this.link[sourceFlowElementIndentifier + "->" + destinationFlowElementIndentifier] 
+    getLink(sourceFlowElement,destinationFlowElement) {
+        var link = this.linkMap[sourceFlowElement.value.id + "->" + destinationFlowElement.value.id] 
         if(!link){
             link = this._svg.append("line")
-                .style("stroke", "black")
+                //.style("stroke", "black")
                 .attr("stroke-width", 2)
                 .attr("marker-end", "url(#triangle-outline)")
-            this.link[sourceFlowElementIndentifier+ "->" + destinationFlowElementIndentifier] = link
+            this.linkMap[sourceFlowElement.value.id+ "->" + destinationFlowElement.value.id] = link
         }
         return link.node();
     }
 
+    handleSVGResize() {
+        this.updateSVG()        
+    }
 
     handleActive(event){
-        this.activeFlowElement=event.target; 
-        this.removeFlowElementEventListeners(this.activeFlowElement);        
+        this.removeFlowElementEventListeners(event.target);        
           
         [...this.shadowRoot.querySelector('slot').querySelectorAll(".flowElement:not(.active)")].forEach(notActiveFE=>{
             notActiveFE.hide()
             this.removeFlowElementEventListeners(notActiveFE)
         })      
-        
-        //this._svg.attr("viewBox", `0 0 ${this.clientWidth} ${this.clientHeight}`) 
+        document.removeEventListener("keydown",this.handleKeyPressListner)
     }
 
     handleInactive(event){
@@ -910,9 +1209,8 @@ class Flow extends ElementGroup{
             notActiveFE.show()
             this.addFlowElementEventListeners(notActiveFE)
         })    
-        this.addFlowElementEventListeners(event.target)
-        this.activeFlowElement=null   
-         
+        this.addFlowElementEventListeners(event.target)   
+        document.addEventListener("keydown",this.handleKeyPressListner)
 
     }
 
@@ -923,16 +1221,41 @@ class Flow extends ElementGroup{
        
     }
 
+    handleSwitch(event){
+        //this.value=event.target.value.design;
+        const changeEvent = new CustomEvent('switchflow', {
+            detail: { value: event.target.value }
+        });
+
+        this.dispatchEvent(changeEvent)
+    }
+
+    handleClose(){
+        var activeFlowElements=this.shadowRoot.querySelectorAll('.active')
+        if(activeFlowElements.length>0){
+            activeFlowElements.forEach(fu=>fu.inactive())
+        }else{
+            
+            const changeEvent = new CustomEvent('switchflow', {
+                detail: { value: this.value }
+            });
+
+            this.dispatchEvent(changeEvent)
+        }
+    }   
+
     removeFlowElementEventListeners(flowElement){
         flowElement.removeEventListener('active',this.handleActiveListner)
         flowElement.addEventListener('inactive',this.handleInactiveListner)
         flowElement.removeEventListener('focus', this.handleFocusListner, true);
+        flowElement.addEventListener('switchflow', this.handleSwitchListner);
         
     }
     addFlowElementEventListeners(flowElement){
         flowElement.addEventListener('active', this.handleActiveListner)
         flowElement.removeEventListener('inactive',this.handleInactiveListner)
-        flowElement.addEventListener('focus', this.handleFocusListner, true);
+        flowElement.addEventListener('focus', this.handleFocusListner, true);//capture focus instead of bubble
+        flowElement.addEventListener('switchflow', this.handleSwitchListner);
         
     }
 

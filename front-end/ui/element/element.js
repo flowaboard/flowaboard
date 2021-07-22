@@ -218,6 +218,15 @@ class Element extends HTMLElement {
             if (callNow) func.apply(context, args);
         };
     }
+
+    performanceCache={}
+    performanceStart(tag){
+        this.performanceCache[tag]=performance.now()
+    }
+    performanceEnd(tag){
+        console.warn(`${tag} ${performance.now()-this.performanceCache[tag]}ms`)
+        delete this.performanceCache[tag]
+    }
     static getNewInstance(){
         return document.createElement(Element.elementRegistry[this])
     }
