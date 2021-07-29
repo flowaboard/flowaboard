@@ -1,4 +1,4 @@
-import { DesignElement } from './design.js'
+import { DesignElement } from '../design.js'
 
 
 

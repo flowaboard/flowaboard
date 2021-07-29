@@ -1,13 +1,13 @@
-import { DesignElement } from './design.js'
-import { Builder } from '../ui/builder/builder.js'
-import { ElementSelection } from '../ui/builder/element-selection.js';
+import { DesignElement } from '../design.js'
+import { Builder } from '../../ui/builder/builder.js'
+import { ElementSelection } from '../../ui/builder/element-selection.js';
 
 class UI extends DesignElement{
     constructor(type,label, uniqueIdentifier, processIdentifiers) {
         super('UI', label, uniqueIdentifier)
         this.processIdentifiers = new Set(processIdentifiers)
     }    
-    getUi(){        
+    async getUi(){        
         const builder = document.createElement('ui-builder')
         const root=(builder.appendChild(document.createElement('ui-root')),builder.querySelector('ui-root'))
         const element=document.createElement('ui-element')
