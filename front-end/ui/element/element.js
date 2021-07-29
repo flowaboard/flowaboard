@@ -10,7 +10,11 @@ class Element extends HTMLElement {
     static register(elementTagName,elementClass){
         Element.elementRegistry[elementClass]=elementTagName
         Element.elementRegistry[elementTagName]=elementClass
-        window.customElements.define(elementTagName, elementClass);
+        try{
+            window.customElements.define(elementTagName, elementClass);
+        }catch(e){
+            console.warn(e)
+        }
     }
     static getSample(){
         const element=this.getNewInstance()
@@ -78,7 +82,9 @@ class Element extends HTMLElement {
     set value(value) {
         this._value = value;
         this.setAttribute('value', (value||"").toString());
-        this.render()
+        if(this._ondom){
+            this.render()
+        }
     }
 
     get type() {
@@ -98,11 +104,14 @@ class Element extends HTMLElement {
     get cssSelector() {
         return ''
     }
+    _ondom;
     connectedCallback() {
+        this._ondom = true;
         this.render();
         this.attachEventHandlers();
     }
     disconnectedCallback() {
+        this._ondom = false;
         this.removeEventHandlers();
     }
     static get observedAttributes() {
