@@ -962,7 +962,9 @@ class Flow extends ElementGroup {
 
 
         
-        this.typesToRender.forEach((type) => {
+
+        this.typesToRender.forEach(async (type) => {
+
             this.performanceStart(`Processing flowElements took for ${type}`)
 
             var typeIndex = this.getTypeIndex(type)
