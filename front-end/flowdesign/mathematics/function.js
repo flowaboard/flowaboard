@@ -3,7 +3,6 @@ import FlowAboard from '../../flowaboard.js'
 
 import esprima from '../../lib/esprima/esprima.js'//'https://cdn.jsdelivr.net/npm/esprima@4.0.1/dist/esprima.min.js'
 
-
 MathJax = {
     tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
     svg: { fontCache: 'global' },
@@ -24,6 +23,7 @@ class FunctionBody extends Process {
     getActiveUi() {
         var div = document.createElement('mathjax-input');
         console.log(MathJax);
+
         console.log(esprima)
         return div;
     }
