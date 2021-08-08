@@ -1,0 +1,6 @@
+{
+  "label": "Addition",
+  "id": "Addition",
+  "description": "https://en.wikipedia.org/https://en.wikipedia.org/wiki/Addition",
+  "mathml":"<math><mrow><mi>a</mi><mo>+</mo><mi>b</mi></mrow></math>"
+}

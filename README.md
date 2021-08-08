@@ -1,7 +1,8 @@
-# Flowaboard
+
 
   <div align="center">
     <img src="front-end/assets/icon200.png">
+    <h1>FlowAbaord</h1>
   </div>
 
   Flowaborad is knowledge dependency framework with inbuilt power to develop, test ,dedupe and simulate any knowledge.To flow abaord any knowledge we need to think flowly.

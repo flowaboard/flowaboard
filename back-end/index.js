@@ -7,6 +7,6 @@ express()
   .use(express.static(path.join(__dirname, '/../node_modules')))
   .use(express.static(path.join(__dirname, '/../')))
   .get('/', (req, res)=>{
-    res.sendFile(path.join(__dirname + '../front-end/index.html'));
+    res.sendFile(path.join(__dirname + '../index.html'));
   })
   .listen(PORT, () => console.log(`Listening on ${ PORT }`))

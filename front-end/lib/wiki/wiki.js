@@ -14,7 +14,7 @@ class Wiki {
         }
     }
     static isWikiUrl(url){
-        return url.indexOf(Wiki.wikiUrlInit)==0
+        return url && url.indexOf(Wiki.wikiUrlInit)==0
     }
 }
 

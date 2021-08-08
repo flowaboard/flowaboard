@@ -1,4 +1,4 @@
-import {Element} from '../element/element.js'
+import Element from'../element/element.js'
 class BehaviourType extends Element{
     constructor() {
         super();

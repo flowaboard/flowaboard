@@ -1,6 +1,7 @@
 import { Behaviour } from "../behaviour/behaviour.js";
 
 class Element extends HTMLElement {
+    
     constructor() {
         super();
         this.behaviours = []
@@ -13,7 +14,7 @@ class Element extends HTMLElement {
         try{
             window.customElements.define(elementTagName, elementClass);
         }catch(e){
-            console.warn(e)
+            //console.warn(e)
         }
     }
     static getSample(){
@@ -105,9 +106,9 @@ class Element extends HTMLElement {
         return ''
     }
     _ondom;
-    connectedCallback() {
+    async connectedCallback() {
         this._ondom = true;
-        this.render();
+        await this.render();
         this.attachEventHandlers();
     }
     disconnectedCallback() {
@@ -143,29 +144,32 @@ class Element extends HTMLElement {
     beforeRender() {
 
     }
-    render() {
-        this._beforeRender()
+    async render() {
+        await this._beforeRender()
         const container = this.container || (this.container=this.attachShadow({ mode: 'open' }),this.container);
 
         this.behaviours.map(behaviour => behaviour.setAttribute())
         //Add default class
         this.classList.add(...['ui', this.constructor.name])
-
+        const template = await this.HTML
         //Craete InnerHtml
         container.innerHTML = `
         <style>
-        ${this.CSS || ''}
+        ${await this.CSS || ''}
         ${this.behaviours.map(behaviour => behaviour.CSS).join('\n')}        
         </style>
         ${this.behaviours.filter(behaviour => behaviour.at == 'Top').map(behaviour => behaviour.HTML).join('\n')}  
-        ${this.HTML}
+        ${template.outerHTML?'':template}
         ${this.behaviours.filter(behaviour => behaviour.at == 'Bottom' || !behaviour.at).map(behaviour => behaviour.HTML).join('\n')}  
         `;
+        if(template.outerHTML)
+        container.appendChild(template)
+        
 
         
         this._afterRender()
     }
-    _afterRender() {
+    async _afterRender() {
         const styles = document.querySelector('link[href*="fontawesome"]');
         const existingStyles=this.shadowRoot.querySelector('link[href*="fontawesome"]')
         if (styles && !existingStyles) {
@@ -241,4 +245,4 @@ class Element extends HTMLElement {
     }
 }
 Element.register('ui-element', Element);
-export { Element };
+export default Element;

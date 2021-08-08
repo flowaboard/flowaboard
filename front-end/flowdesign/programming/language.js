@@ -1,4 +1,4 @@
-import { Design, DesignElement, FlowDesigns } from  '../design.js';//'https://cdn.jsdelivr.net/gh/flowaboard/flowaboard/front-end/flowdesign/design.js';
+import { Design, DesignElement, FlowDesigns } from  '../design.js';//'https://cdn.jsdelivr.net/gh/flowaboard/flowaboard/flowdesign/design.js';
 
 
 var languageDesign = new FlowDesigns.ListDesign('Language', 'language', `https://en.wikipedia.org/wiki/Programming_language`)
@@ -20,8 +20,8 @@ languageDesign.flowConfig = {
         xPadding: 0.4,
         yPadding: 0.4,
     },
-    action: {
-        "click":"flow"
+    elementAction: {
+        "click" : {"action":"flow","state":"default"}
     }
 }
 

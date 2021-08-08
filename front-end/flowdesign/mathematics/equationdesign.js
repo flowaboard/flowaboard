@@ -11,8 +11,8 @@ equationDesign.flowConfig = {
         xPadding: 0.4,
         yPadding: 0.4,
     },
-    action: {
-        "click":"flow"
+    elementAction: {
+        "click" : {"action":"flow","state":"default"}
     }
 }
 

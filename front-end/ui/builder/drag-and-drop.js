@@ -1,6 +1,6 @@
 
 import { DragAndDrop } from "../group-behaviour/drag-and-drop.js";
-import { Element } from "../element/element.js";
+import Element from "../element/element.js";
 class DragAndDropElments extends DragAndDrop{
     dragStart(e){
         e.dataTransfer.setData("text", e.target.value.tagName);

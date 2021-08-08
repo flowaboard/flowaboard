@@ -1,4 +1,4 @@
-import { Design, DesignElement, FlowDesigns } from  '../design.js';//'https://cdn.jsdelivr.net/gh/flowaboard/flowaboard/front-end/flowdesign/design.js';
+import { Design, DesignElement, FlowDesigns } from  '../design.js';//'https://cdn.jsdelivr.net/gh/flowaboard/flowaboard/flowdesign/design.js';
 
 
 var applicationDesign = new FlowDesigns.ListDesign('Application', 'app', `https://en.wikipedia.org/wiki/Application_software`);
@@ -16,8 +16,8 @@ applicationDesign.flowConfig = {
         xPadding: 0.4,
         yPadding: 0.4,
     },
-    action: {
-        "click":"flow"
+    elementAction: {
+        "click" : {"action":"flow","state":"default"}
     }
 }
 
