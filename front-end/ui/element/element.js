@@ -1,11 +1,17 @@
 import { Behaviour } from "../behaviour/behaviour.js";
 
+import Debugger from "../../lib/debugger.js";
+
+
 class Element extends HTMLElement {
     
     constructor() {
         super();
+        
+        this.debugger=Debugger(this.debug,this.tagName)
         this.behaviours = []
         this.behaviour = {}//will convert to weekmap
+        
     }
     static elementRegistry={}//will convert to weekmap
     static register(elementTagName,elementClass){
@@ -232,17 +238,52 @@ class Element extends HTMLElement {
         };
     }
 
+    subscribe(event,callback) {
+        switch (event) {
+            case 'resize':
+                this.selfObserver = new ResizeObserver(entries => {
+                    entries.forEach(entry => {
+                        if(this._ondom){
+                            callback(entry)
+                        }
+                    });
+                });
+                this.selfObserver.observe(this);
+                break;
+        
+            default:
+                break;
+        }
+        
+    }
+    unsubscribe(event){
+        switch (event) {
+            case 'resize':
+                
+                this.selfObserver&&this.selfObserver.disconnect() ;
+                break;
+        
+            default:
+                break;
+        }
+    }
+
     performanceCache={}
     performanceStart(tag){
         this.performanceCache[tag]=performance.now()
     }
     performanceEnd(tag){
+        if(this.debug)
         console.warn(`${tag} ${performance.now()-this.performanceCache[tag]}ms`)
         delete this.performanceCache[tag]
     }
+
+    
     static getNewInstance(){
         return document.createElement(Element.elementRegistry[this])
     }
+
+    
 }
 Element.register('ui-element', Element);
 export default Element;
