@@ -20,7 +20,7 @@
     "heroku": "^7.47.11"
   },
   "scripts": {
-    "start": "node back-end/index.js",
+    "start": "node back-end/node/index.js",
     "start-dev": "nodemon back-end/index.js --ignore front-end",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
