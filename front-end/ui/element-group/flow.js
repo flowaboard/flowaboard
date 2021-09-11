@@ -110,6 +110,9 @@ class FlowElement extends Element {
             display:flex;
             width: 100%;
         }
+        :host(.active){
+            box-shadow: 2px 2px 6px 3px grey;
+        }
         :host.active>span{
             margin: 0;
             margin-top: 4rem;
@@ -154,7 +157,8 @@ class FlowElement extends Element {
         }   
         .action:hover{
             visibility: visible;
-        }   
+        } 
+          
         ui-flow{
             box-shadow: 2px 2px 12px 2px grey;
             border-radius: 0.5rem;
@@ -177,7 +181,7 @@ class FlowElement extends Element {
             this.flowAboard = new FlowAboard(parent);
         }
         const flow = await this.flowAboard.load(functionListDesign)
-        console.log(flow)
+        this.debugger.log(flow)
         return flow
     }
     get HTML() {
@@ -243,7 +247,7 @@ class FlowElement extends Element {
     }
 
     handleAdd(e) {
-        console.log(e.value)
+        this.debugger.log(e.value)
     }
 
     //Event Handlers
@@ -263,7 +267,7 @@ class FlowElement extends Element {
         this.updateLink()
     }
     handleResize() {
-        //console.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
+        //this.debugger.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
 
         this.coordinates(this.x, this.y, this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
 
@@ -328,7 +332,7 @@ class FlowElement extends Element {
         this.style.width = width;
         this.style.height = height;
 
-        //console.log("Set Dimenions",width,height)
+        //this.debugger.log("Set Dimenions",width,height)
         if (!this.isActive)
             this.inactiveState = {
                 ...this.inactiveState, ...{
@@ -349,7 +353,7 @@ class FlowElement extends Element {
         this.style.left = x - this.getBoundingClientRect().width / 2;//center the component
         this.style.top = y - this.getBoundingClientRect().height / 2;//center the component;
 
-        //console.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
+        //this.debugger.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
 
         if (this.style.top > this.parentFlow.height / 2)
             this.style.transformOrigin = "left center"
@@ -425,7 +429,7 @@ class FlowElement extends Element {
                     //this.coordinates(this.x,this.y,this.z)// to update width based calculation              
                     this.updateLinkHead();
                     this.updateLinkTail();
-                    //console.log('updateLink')
+                    //this.debugger.log('updateLink')
                 }
             });
         }
@@ -891,7 +895,7 @@ class Flow extends ElementGroup {
         }
 
         if (this.value) {
-            console.log('afterRender updateSVG')
+            this.debugger.log('afterRender updateSVG')
             this.updateSVG()
         } else {
 
@@ -901,7 +905,7 @@ class Flow extends ElementGroup {
 
     update() {
         this.setupConfig()
-        console.log('update updateSVG')
+        this.debugger.log('update updateSVG')
         this.updateSVG()
     }
 
@@ -920,7 +924,7 @@ class Flow extends ElementGroup {
     }
 
     handleKeyPress(e) {
-        //console.log(e)
+        //this.debugger.log(e)
         e = e || window.event;
         if (e.keyCode == '13') {
             this.setActiveByEnterKey()
@@ -1026,7 +1030,7 @@ class Flow extends ElementGroup {
 
                 const newWidth = (this.config.flex || flowElement.isActive) ? width : xEvenelySpaced.divisonElementDimensions[typeIndex]
                 flowElement.dimensions(newWidth, height);
-                //console.log(flowElement.type, 'Direct', xEvenelySpaced.coordinates[typeIndex], xEvenelySpaced.divisonElementDimensions[typeIndex], flowElement.getBoundingClientRect().x)
+                //this.debugger.log(flowElement.type, 'Direct', xEvenelySpaced.coordinates[typeIndex], xEvenelySpaced.divisonElementDimensions[typeIndex], flowElement.getBoundingClientRect().x)
 
 
                 flowElement.classList.add(type)
@@ -1270,7 +1274,7 @@ class Flow extends ElementGroup {
     }
 
     handleSVGResize() {
-        console.log('handleSVGResize updateSVG')
+        this.debugger.log('handleSVGResize updateSVG')
         this.updateSVG()
     }
 
@@ -1338,27 +1342,6 @@ class Flow extends ElementGroup {
         flowElement.addEventListener('focus', this.handleFocusListner, true);//capture focus instead of bubble
         flowElement.addEventListener('flow', this.handleFlowListner);
 
-    }
-
-
-
-    log(msg) {//See https://stackoverflow.com/a/27074218/470749
-        var e = new Error();
-        if (!e.stack)
-            try {
-                // IE requires the Error to actually be thrown or else the 
-                // Error's 'stack' property is undefined.
-                throw e;
-            } catch (e) {
-                if (!e.stack) {
-                    //return 0; // IE < 10, likely
-                }
-            }
-        var stack = e.stack.toString().split(/\r\n|\n/);
-        if (msg === '') {
-            msg = '""';
-        }
-        console.log(msg, '          [' + stack[1] + ']');
     }
 
 
