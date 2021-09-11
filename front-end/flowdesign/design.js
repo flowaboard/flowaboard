@@ -64,7 +64,7 @@ class Design extends Data {
             this.designElements.push(designElement)
             designElement.parent=this;
         }
-        if(this._types.indexOf(designElement.type)){
+        if(!this._types.find((v)=>v==designElement.type)){
             this._types.push(designElement.type)
         }
         return this.functionUnitMap[designElement.id]
@@ -146,8 +146,9 @@ class Design extends Data {
         this.designElementsId=parsed.designElementsId;
         (parsed.designElements||[]).forEach(designElement=>this.addFromJSON(designElement))
     }
-    execute(){
-        console.log("Executing",JSON.stringify(this))
+    async execute(...inputs){ 
+        console.log("Executing",JSON.stringify(this))   
+        //return this.outputs.map(output=>output.execute(...inputs))
     }
     
 
@@ -171,24 +172,20 @@ class DesignElement extends Data {
         this.designId = designId;
         this.config = config||{};
         this.description = description;
-        if (Wiki.isWikiUrl(description)) {
-            this.updateWikiDescription()
-        }
     }
     _description;
     set description(value) {
+        this._description = value
         if (Wiki.isWikiUrl(value)) {
             this.updateWikiDescription()
-        } else {
-            this._description = value
-        }
+        } 
     }
     get description() {
         return this._description
     }
 
     async updateWikiDescription() {
-        this._description = (await Wiki.fetchSummary(this.description)).description;
+        this._Wikidescription = (await Wiki.fetchSummary(this.description)).description;
         this.publish('change')
     }
     
@@ -210,9 +207,15 @@ class DesignElement extends Data {
         this.designId = designElement.designId;
     }
     async toDesign(){
-        if(this.designId){
+        if(!this.design && this.designId){
             return await this.loadDesign(this.designId);
+        }else{
+            return this.design
         }
+    }
+
+    getRoot(root){
+        return this.root||this.parent.root||root||''
     }
 
     async loadDesign(designId,root) {
@@ -222,9 +225,9 @@ class DesignElement extends Data {
         } else if (Utility.isFlowURL(designId)) {
             design = Design.getNewInstance(await fetch(designId));
         } else if (Utility.isJSUrlPath(designId)) {
-            design = (await import((this.root||this.parent.root||root)+designId)).default;
+            design = (await import(this.getRoot(root)+designId)).default;
         } else if (Utility.isFlowUrlPath(designId)) {
-            design = Design.getNewInstance( (this.root||this.parent.root||root)+designId);
+            design = Design.getNewInstance( this.getRoot(root)+designId);
         } else {
             console.log('future')
         }
@@ -241,8 +244,18 @@ class DesignElement extends Data {
         };
     }
     static getRootDomain(){
-        return location.href.indexOf("flowaboard.github.io")>=0?location.href+'/flowabaord/frontend/':location.href
+        return location.href
     }
+
+    
+    get value(){
+        return this.parent.getElements(this.previous()).map(previous=>previous.execute())
+    }
+
+    async execute(){
+        return await Promise.all(this.value);
+    }
+    
 }
 
 
@@ -273,10 +286,10 @@ class Process extends DesignElement {
         this.outputIdentifiers = new Set(outputIdentifiers)
     }
     next() {
-        return this.outputIdentifiers
+        return [...this.outputIdentifiers]
     }
     previous() {
-        return this.inputIdentifiers
+        return [...this.inputIdentifiers]
     }
     update(process) {
         super.update(process)
@@ -292,7 +305,7 @@ class Output extends DesignElement {
     }
 
     previous() {
-        return this.processIdentifiers
+        return [...this.processIdentifiers]
     }
     update(output) {
         super.update(output)
@@ -364,33 +377,85 @@ class IODesign extends Design {
     get types() {
         return ['inputs', 'processes', 'outputs']
     }
+    async execute(){    
+        return this.outputs.map(output=>output.execute())
+    }
+}
+
+class ProcessDesign extends IODesign{
+    
+}
+
+class Step extends Process {
+    constructor(label, id, description, designId, config,inputIdentifiers, outputIdentifiers) {
+        super(label, id, description, 'step', designId, config)
+        this.inputIdentifiers = new Set(inputIdentifiers)
+        this.outputIdentifiers = new Set(outputIdentifiers)
+        
+    }
+}
+
+class SerialDesign extends IODesign {
+    firstStep;
+    lastStep;
+    add(ioElement) {
+        if (ioElement instanceof Step) {
+            this.addStep(ioElement)
+        }else{
+            super.add(ioElement)
+        }
+    }
+    addStep(step){
+        if(this.lastStep){
+            this.lastStep.outputIdentifiers.add(step.id)
+            step.inputIdentifiers.add(this.lastStep.id)
+        }else{
+            this.firstStep=step
+        }
+        
+        
+        this.lastStep=step;
+        super.addProcess(step)
+        //Need to find better way
+        step.type = 'step'+this.processes.length;
+        
+    }
+    async execute(){    
+        return this.lastStep.execute()
+    }
+
+    get types() {
+        var steps=['inputs']
+        for(let i=1;i<=this.processes.length;i++){
+            steps.push('step'+i)
+        }
+        steps.push('outputs')
+        return steps;
+    }
+
+}
+
+class ParallelDesign extends IODesign {
+
+}
+
+class OptionalDesign extends IODesign {
+
 }
 
 
-class SerialProcessDesign extends Design {
-
-}
-
-class ParallelProcessDesign extends Design {
-
-}
-
-class OptionalProcessDesign extends Design {
-
-}
-
-
-class ListDesign extends OptionalProcessDesign {
+class ListDesign extends Design {
     
 }
 
 const FlowDesigns = {
-    SerialProcessDesign,
-    ParallelProcessDesign,
-    OptionalProcessDesign,
+    ProcessDesign,
+    SerialDesign,
+    ParallelDesign,
+    OptionalDesign,
     IODesign,
-    ListDesign
+    ListDesign                                                  
 }
 
 
-export { FlowDesigns, Design, Input, Output, Process, DesignElement }
+export { FlowDesigns, Design, Input, Output, Process,Step, DesignElement }
