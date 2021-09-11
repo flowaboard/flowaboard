@@ -84,7 +84,11 @@ class Element extends HTMLElement {
     }
     _value;
     get value() {
-        return this._value || JSON.parse(this.getAttribute('value') || '""');
+        try{
+            return this._value || JSON.parse(this.getAttribute('value') || '""');
+        }catch(e){
+            return ""
+        }
     }
     set value(value) {
         this._value = value;
