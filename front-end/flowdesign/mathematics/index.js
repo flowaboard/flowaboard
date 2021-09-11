@@ -1,16 +1,12 @@
 import { Design, DesignElement, FlowDesigns } from '../design.js';
 
-class MathematicsDesign extends FlowDesigns.ListDesign{
-    static getRootDomain(){
-        return location.href.indexOf("flowaboard.github.io")>=0?location.href+'/flowabaord/front-end/flowdesign/mathematics':location.href+'/front-end/flowdesign/mathematics'
-    }
-}
+import MathematicsDesign from './design/mathematics.js';
 
 
 
 var matheMaticsDesign = new MathematicsDesign('MatheMatics', 'mathematics', `https://en.wikipedia.org/wiki/Mathematics`)
-matheMaticsDesign.add(new DesignElement('Functions', 'function', `https://en.wikipedia.org/wiki/Function_(mathematics)`,'flow-info','/functiondesign.js'))
-matheMaticsDesign.add(new DesignElement('Equations', 'equation', `https://en.wikipedia.org/wiki/Equation`,'flow-info','/equationdesign.js'))
+matheMaticsDesign.add(new DesignElement('Functions', 'function', `https://en.wikipedia.org/wiki/Function_(mathematics)`,'flow-info','/elements/functions/index.js'))
+matheMaticsDesign.add(new DesignElement('Equations', 'equation', `https://en.wikipedia.org/wiki/Equation`,'flow-info','/elements/equations/index.js'))
 
 matheMaticsDesign.root=location.href+'flowdesign/mathematics'
 matheMaticsDesign.flowConfig = {
