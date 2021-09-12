@@ -118,9 +118,9 @@ class Design extends Data {
         } else if (Utility.isFlowURL(designElementsId)) {
             designElements = Design.getNewInstance(await fetch(designElementsId));
         } else if (Utility.isJSUrlPath(designElementsId)) {
-            designElements = (await import(location.href + designElementsId)).default;
+            designElements = (await import(location.origin + designElementsId)).default;
         } else if (Utility.isFlowUrlPath(designElementsId)) {
-            designElements = Design.getNewInstance(await fetch(location.href + designElementsId));
+            designElements = Design.getNewInstance(await fetch(location.origin + designElementsId));
         } else {
             
         }
@@ -244,7 +244,7 @@ class DesignElement extends Data {
         };
     }
     static getRootDomain(){
-        return location.href
+        return location.origin
     }
 
     

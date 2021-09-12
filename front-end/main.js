@@ -9,9 +9,21 @@ import {DesignElement} from './flowdesign/design.js'
 
 const parent = document.body;
 const flowly =  new FlowAboard(parent)
-const designElement = await new DesignElement('Abstract','abstract','Abstract designs','flow-info',location.href + '/flowdesign/abstract/index.js')
+var paths = location.pathname.split('/')
+let currentDesignElement, currentDesign;
+for (const path of paths) {
+    if(path==''){
+        currentDesignElement = await new DesignElement('Abstract','abstract','Abstract designs','flow-info',location.origin + '/flowdesign/abstract/index.js')
+        currentDesign = await currentDesignElement.toDesign()  
+    }else{
+        currentDesignElement = currentDesign.getElement(path)
+        currentDesign = await currentDesignElement.toDesign()  
+    }
+    
+}
 
-const flow = await flowly.load(await designElement.toDesign())
+
+const flow = await flowly.load(currentDesign)
 parent.appendChild(flow)
 
 

@@ -5,7 +5,7 @@ var programmingDesign = new FlowDesigns.ListDesign('Programming', 'programming',
 programmingDesign.add(new DesignElement('Language', 'language', `https://en.wikipedia.org/wiki/Programming_language`,'flow-info','/elements/language/index.js'))
 programmingDesign.add(new DesignElement('Application', 'app', `https://en.wikipedia.org/wiki/Application_software`,'flow-info','/elements/application/index.js'))
 
-programmingDesign.root=location.href+'flowdesign/programming'
+programmingDesign.root=location.origin+'/flowdesign/programming'
 programmingDesign.flowConfig = {
     flex: true,
     defaultValue: {

@@ -8,7 +8,7 @@ var matheMaticsDesign = new MathematicsDesign('MatheMatics', 'mathematics', `htt
 matheMaticsDesign.add(new DesignElement('Functions', 'function', `https://en.wikipedia.org/wiki/Function_(mathematics)`,'flow-info','/elements/functions/index.js'))
 matheMaticsDesign.add(new DesignElement('Equations', 'equation', `https://en.wikipedia.org/wiki/Equation`,'flow-info','/elements/equations/index.js'))
 
-matheMaticsDesign.root=location.href+'flowdesign/mathematics'
+matheMaticsDesign.root=location.origin+'/flowdesign/mathematics'
 matheMaticsDesign.flowConfig = {
     flex: true,
     defaultValue: {

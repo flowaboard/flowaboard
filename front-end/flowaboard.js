@@ -23,22 +23,33 @@ class FlowAboard {
 
     parent = document.body;
     graph = new WeakMap();
-    pushState(present, future) {
-        if(future instanceof FlowDesigns.ListDesign ){
+    pushState(present, future,skipWindowHistory) {
+        if(future instanceof FlowDesigns.ListDesign && !skipWindowHistory){
             window.history.pushState({},future.label,(location.pathname=='/'?'':location.pathname)+"/"+future.id)
         }
         this.graph.set(future, present)
     }
-    popState(present) {
+    popState(present,skipWindowHistory) {
         let past = this.graph.get(present)
-        if(present instanceof FlowDesigns.ListDesign && past ){
+        if(present instanceof FlowDesigns.ListDesign && past && !skipWindowHistory){
             window.history.back()
         }
         
         return past;
     }
+    historyListener(e){
+        let currentDesign = this.getCurrentDesign()
+        let parentdesign = this.popState(currentDesign)
+        if (parentdesign){
+            this.load(parentdesign)
+
+        }else{
+            e.preventDefault()
+        }
+    }
     constructor(parent) {
         this.parent = parent;
+        //window.addEventListener('popstate', (e)=>this.historyListener(e));
     }
     async load(design) {
         try {
@@ -59,14 +70,14 @@ class FlowAboard {
     async getFlowUi() {
 
         let flow = this.parent.querySelector('ui-flow')
-        if (flow) {
+        if (this.flow) {
             return flow
         }
-        flow = Flow.getNewInstance();
+        this.flow = Flow.getNewInstance();
 
 
 
-        flow.addEventListener('openflow', async (e) => {
+        this.flow.addEventListener('openflow', async (e) => {
             console.log('flow', e.detail.value)
             if (e.detail.value) {
                 this.openFlow(e.target, e.detail.value)
@@ -74,7 +85,7 @@ class FlowAboard {
             }
 
         })
-        flow.addEventListener('closeflow', async (e) => {
+        this.flow.addEventListener('closeflow', async (e) => {
             console.log('flow', e.detail.value)
             if (e.detail.value) {
                 this.closeFlow(e.target, e.detail.value)
@@ -82,7 +93,7 @@ class FlowAboard {
 
         })
 
-        return flow;
+        return this.flow;
     }
     async getOutputUi(){
         
@@ -104,6 +115,12 @@ class FlowAboard {
 
     async getElement(elementId) {
         
+    }
+    getCurrentDesign(){
+        return this.flow.value;
+    }
+    getPreviousDesign(){
+        return this.flow.value.parent;
     }
 
 
