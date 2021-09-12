@@ -24,10 +24,18 @@ class FlowAboard {
     parent = document.body;
     graph = new WeakMap();
     pushState(present, future) {
+        if(future instanceof FlowDesigns.ListDesign ){
+            window.history.pushState({},future.label,(location.pathname=='/'?'':location.pathname)+"/"+future.id)
+        }
         this.graph.set(future, present)
     }
     popState(present) {
-        return this.graph.get(present)
+        let past = this.graph.get(present)
+        if(present instanceof FlowDesigns.ListDesign && past ){
+            window.history.back()
+        }
+        
+        return past;
     }
     constructor(parent) {
         this.parent = parent;
