@@ -1,6 +1,6 @@
 import FunctionListDesign,{FunctionListElement} from "./design/functions.js";
 
-var functionListDesign = new FunctionListDesign('List of Functions', 'List_of_functions', `https://en.wikipedia.org/wiki/List_of_mathematical_functions`, 'function', '/')
+var functionListDesign = new FunctionListDesign('List of Functions', 'functions', `https://en.wikipedia.org/wiki/List_of_mathematical_functions`, 'function', '/')
 functionListDesign.add(new FunctionListElement('Addition', 'Addition', 'https://en.wikipedia.org/https://en.wikipedia.org/wiki/Addition'));
 functionListDesign.add(new FunctionListElement('Subtraction', 'Subtraction', 'https://en.wikipedia.org/https://en.wikipedia.org/wiki/Subtraction'));
 functionListDesign.add(new FunctionListElement('Multiplication', 'Multiplication', 'https://en.wikipedia.org/https://en.wikipedia.org/wiki/Multiplication'));
