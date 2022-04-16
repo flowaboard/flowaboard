@@ -1,4 +1,5 @@
 import { DesignElement, FlowDesigns, Process, Input, Output, Step } from '/flowdesign/design.js';
+import { JSStep, JSBody, JSInput, JSOutput } from './javascriptElements.js';
 
 
 
@@ -14,15 +15,9 @@ import JSExpressionDesign from '../elements/expression/design/expression.js';
 import JSVariableDesign from '../elements/variable/design/variable.js';
 import JSStatementDesign from '../elements/object/design/statement.js';
 import JSStatementsDesign from '../elements/object/design/statements.js';
+import JSIfElseDesign from '../elements/control/design/ifelse.js';
+import JSLoopDesign from '../elements/control/design/loop.js';
 
-class JSStep extends Step {
-    constructor(label, id, description, design, inputIdentifiers, outputIdentifiers) {
-        var config =
-            super(label, id, description, null, config, inputIdentifiers, outputIdentifiers)
-        this.design = design
-
-    }
-}
 
 class Javascript extends FlowDesigns.SerialDesign {
     static debug = true;
@@ -57,20 +52,15 @@ class Javascript extends FlowDesigns.SerialDesign {
 
     }
     fromAst(ast) {
+        this.addInput(new JSInput('Window', 'window', ''))
+
+        this.addOutput(new JSOutput('Window', 'window2', '',))
+
         this.debugger.log(ast)
 
-        this.directiveTodesign(ast.program.directives)
-        this.bodyToDesign(ast.program.body)
+        this.directiveTodesign(ast.program)
+        this.bodyToDesign(ast.program)
 
-        this.addInput(new JSInput('Window', 'window', '', [this.firstStep.id]))
-        // this.addInput(new JSInput('Window.dom','window.dom','',[this.firstStep.id]))
-        // this.addInput(new JSInput('Window.Network','window.network','',[this.firstStep.id]))
-        // this.addInput(new JSInput('Window.Storage','window.storage','',[this.firstStep.id]))
-
-        this.addOutput(new JSOutput('Window', 'window2', '', [this.lastStep.id]))
-        // this.addOutput(new JSOutput('Window.dom','window.dom2','',[this.lastStep.id]))
-        // this.addOutput(new JSOutput('Window.Network','window.network2','',[this.lastStep.id]))
-        // this.addOutput(new JSOutput('Window.Storage','window.storage2','',[this.lastStep.id]))
 
     }
     static nodeToDesign(node, parentDesign) {
@@ -87,16 +77,26 @@ class Javascript extends FlowDesigns.SerialDesign {
             case "NullLiteral":
             case "RegExpLiteral":
                 return Javascript.literalToDesign(node, parentDesign)
-            case "Identifier":
-            case "VariableDeclarator":
+            case "Identifier":                   
                 return Javascript.variableToDesign(node, parentDesign)
             case "ExpressionStatement":
                 return Javascript.statementToDesign(node, parentDesign)
             case "VariableDeclaration":
-                return Javascript.variableDeclarationToDesign(node, parentDesign)
+            case "ClassBody":
+            case "BlockStatement":
+                return Javascript.declarationToDesign(node, parentDesign)
             case "BinaryExpression":
             case "AssignmentExpression":
+            case "VariableDeclarator":
+            case "ClassDeclaration":            
+            case "ClassMethod":     
+            case "CallExpression":     
+            case "MemberExpression":     
                 return Javascript.expressionToDesign(node, parentDesign)
+            case "IfStatement":     
+                return Javascript.ifelseToDesign(node, parentDesign)
+            case "ForStatement":     
+                return Javascript.loopToDesign(node, parentDesign)
             default:
                 break;
         }
@@ -131,6 +131,8 @@ class Javascript extends FlowDesigns.SerialDesign {
 
         const statementJS = new JSStatementDesign(statement.loc.text, statement.loc.id)
         statementJS.js = statement.loc.text
+        parentDesign.inputs.forEach(input => statementJS.add(input))
+        parentDesign.outputs.forEach(output => statementJS.add(output))
         statementJS.fromAst(statement)
         statementJS.flowConfig = {
             elementAction: {
@@ -140,18 +142,20 @@ class Javascript extends FlowDesigns.SerialDesign {
         }
         return statementJS;
     }
-    static variableDeclarationToDesign(variableDeclation, parentDesign) {
-        const variableDeclarationJS = new JSStatementsDesign(variableDeclation.loc.text, variableDeclation.loc.id)
-        variableDeclarationJS.js = variableDeclation.loc.text
-        variableDeclarationJS.fromAst(variableDeclation)
-        variableDeclarationJS.addInput(parentDesign)
-        variableDeclarationJS.flowConfig = {
+    static declarationToDesign(declaration, parentDesign) {
+        const declarationJS = new JSStatementsDesign(declaration.loc.text, declaration.loc.id)
+        declarationJS.js = declaration.loc.text
+        parentDesign.inputs.forEach(input => declarationJS.addInput(input))
+        parentDesign.outputs.forEach(output => declarationJS.add(output))
+        declarationJS.fromAst(declaration)
+
+        declarationJS.flowConfig = {
             elementAction: {
                 "click": { "action": "flow", "state": "default" }
             },
 
         }
-        return variableDeclarationJS;
+        return declarationJS;
     }
     static expressionToDesign(expression, parentDesign) {
 
@@ -166,14 +170,48 @@ class Javascript extends FlowDesigns.SerialDesign {
         }
         return expressionJS;
     }
+    static ifelseToDesign(expression, parentDesign) {
+
+        const ifelseJS = new JSIfElseDesign(expression.loc.text, expression.loc.id)
+        ifelseJS.js = expression.loc.text
+        ifelseJS.fromAst(expression)
+        ifelseJS.flowConfig = {
+            elementAction: {
+                "click": { "action": "flow", "state": "default" }
+            },
+
+        }
+        return ifelseJS;
+    }
+    static loopToDesign(expression, parentDesign) {
+
+        const loopJS = new JSLoopDesign(expression.loc.text, expression.loc.id)
+        loopJS.js = expression.loc.text
+        loopJS.fromAst(expression)
+        loopJS.flowConfig = {
+            elementAction: {
+                "click": { "action": "flow", "state": "default" }
+            },
+
+        }
+        return loopJS;
+    }
+
     static updateLoc(node, parentnode, js) {
+        if(!node.loc){
+            node.loc={
+                
+            }
+            return 
+        }
         let relativeStart = node.start - parentnode.start;
         let relativeEnd = node.end - parentnode.start;
-        node.loc.text = js.substring(relativeStart, relativeEnd);
-        node.loc.id = node.start + '->' + js.substring(node.start, node.end) + '->' + node.end;
+        let nodeJs = js.substring(relativeStart, relativeEnd)
+        node.loc.text = nodeJs;
+        node.loc.id = node.start + '->' + nodeJs + '->' + node.end;
     }
-    directiveTodesign(directives) {
-        directives.map(directive => {
+    directiveTodesign(ast) {
+        ast.directives.map(directive => {
             switch (directive.value.type) {
                 case "DirectiveLiteral":
                     switch (directive.value.value) {
@@ -202,8 +240,8 @@ class Javascript extends FlowDesigns.SerialDesign {
             }
         })
     }
-    bodyToDesign(nodes) {
-        nodes.map(node => {
+    bodyToDesign(ast) {
+        ast.body.map(node => {
             let jsStepDesign = Javascript.nodeToDesign(node, this)
             var jsStep = new JSStep(jsStepDesign.label, jsStepDesign.id);
             jsStep.design = jsStepDesign
@@ -212,18 +250,7 @@ class Javascript extends FlowDesigns.SerialDesign {
     }
 
 }
-export class JSBody extends Process {
 
-}
-export class JSInput extends Input {
-
-}
-export class JSOutput extends Output {
-
-}
 export default Javascript;
 
 
-export class JavascriptElement extends DesignElement {
-
-}

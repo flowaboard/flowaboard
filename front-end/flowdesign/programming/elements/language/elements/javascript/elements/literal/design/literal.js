@@ -1,4 +1,5 @@
-import Javascript,{JSInput,JSBody,JSOutput} from '../../../design/javascript.js';
+import Javascript from '../../../design/javascript.js';
+import {JSInput,JSBody,JSOutput} from '../../../design/javascriptElements.js';
 import { DesignElement, FlowDesigns, Process, Input, Output } from '/flowdesign/design.js';
 class JSLiteralDesign extends FlowDesigns.IODesign {
     constructor(literal,description){
@@ -10,10 +11,39 @@ class JSLiteralDesign extends FlowDesigns.IODesign {
     }
     fromAst(ast){
         console.log(ast)
+        switch (ast.type) {
+            case "RegExpLiteral":
+                {
+                    let literalValue = ast.extra.raw;
+                    this.id = literalValue;
+                    this.label = literalValue
+                    this.add(new JSLiteralInput(literalValue,literalValue+'i','',[literalValue+'p']))
+                    this.add(new JSLiteralBody(literalValue,literalValue+'p'))
+                    this.add(new JSLiteralOutput(literalValue,literalValue+'o','',[literalValue+'p']))
+                }
+                break;
+            case "NullLiteral":
+                {
+                    let literalValue = 'null';
+                    this.id = literalValue;
+                    this.label = literalValue
+                    this.add(new JSLiteralInput(literalValue,literalValue+'i','',[literalValue+'p']))
+                    this.add(new JSLiteralBody(literalValue,literalValue+'p'))
+                    this.add(new JSLiteralOutput(literalValue,literalValue+'o','',[literalValue+'p']))
+                }
+                break;
         
-        this.add(new JSLiteralInput(ast.value,ast.value+'i','',[ast.value+'p']))
-        this.add(new JSLiteralBody(ast.value,ast.value+'p'))
-        this.add(new JSLiteralOutput(ast.value,ast.value+'o','',[ast.value+'p']))
+            default:
+                
+                {
+                    let literalValue = ast.value;
+                    this.add(new JSLiteralInput(literalValue,literalValue+'i','',[literalValue+'p']))
+                    this.add(new JSLiteralBody(literalValue,literalValue+'p'))
+                    this.add(new JSLiteralOutput(literalValue,literalValue+'o','',[literalValue+'p']))
+                }
+                break;
+        }
+        
     }
 
 

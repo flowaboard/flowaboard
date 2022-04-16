@@ -1,52 +1,42 @@
-import Javascript,{JSInput,JSBody,JSOutput} from '../../../design/javascript.js';
-import { DesignElement, FlowDesigns, Process, Input, Output } from '/flowdesign/design.js';
+import Javascript from '../../../design/javascript.js';
+import { JSInput, JSBody, JSOutput } from '../../../design/javascriptElements.js';
+import { DesignElement, FlowDesigns } from '/flowdesign/design.js';
 class JSStatementDesign extends FlowDesigns.IODesign {
-    static debug=true;
-    constructor(statement,description){
-        super(statement,statement,description)
-        this.statement=statement
+    static debug = true;
+    constructor(statement, description) {
+        super(statement, statement, description)
+        this.statement = statement
     }
-    get value(){
+    get value() {
         return this.statement
     }
-    fromAst(ast){
-        this.ast=ast
-        this.debugger.log(ast)  
+    fromAst(ast) {
+        this.ast = ast
+        this.debugger.log(ast)
         switch (ast.type) {
             case "ExpressionStatement":
-            case "VariableDeclaration":                
-                var jsDesign = Javascript.nodeToDesign(ast.expression,this)
-                this.add(new JSStatementInput('Window', 'window'+ 'i', '', [jsDesign.id + 'p']))
-                this.add(new JSStatementBody(jsDesign.js, jsDesign.id + 'p','',jsDesign))
-                this.add(new JSStatementOutput('Window', 'window'+ 'o', '', [jsDesign.id + 'p']))
+            case "VariableDeclaration":
+                var jsDesign = Javascript.nodeToDesign(ast.expression, this)
+                this.add(new JSStatementBody(jsDesign.js, jsDesign.id + 'p', '', jsDesign, null, this.inputs.map(v => v.id), this.outputs.map(v => v.id)))
                 break;
-        
+
             default:
                 break;
         }
-        
+
     }
 
 
 
 }
-class JSStatementBody extends Process {
-    constructor(label, id, description, design, config,inputIdentifiers, outputIdentifiers) {
-        super(label, id, description, null, config,inputIdentifiers, outputIdentifiers)
-        this.design=design
-    }
+class JSStatementBody extends JSBody {
+
 }
-class JSStatementInput extends Input {
-    constructor(label, id, description, processIdentifiers, design,config) {
-        super(label, id, description,processIdentifiers, null,config)
-        this.design=design
-    }
+class JSStatementInput extends JSInput {
+
 }
-class JSStatementOutput extends Output {
-    constructor(label, id, description, processIdentifiers, design, config) {
-        super(label, id, description, processIdentifiers, null, config)
-        this.design=design
-    }
+class JSStatementOutput extends JSOutput {
+
 }
 
 

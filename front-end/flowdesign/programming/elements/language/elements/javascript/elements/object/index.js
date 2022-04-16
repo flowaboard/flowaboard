@@ -1,5 +1,5 @@
 import { Design, DesignElement, FlowDesigns } from  '/flowdesign/design.js';
-import { JavascriptElement } from './../../design/javascript.js';
+import { JavascriptElement } from './../../design/javascriptElements.js';
 
 var javascriptElementsDesign = new FlowDesigns.ListDesign('Javascript Litrals', 'jsliterals', `https://en.wikipedia.org/wiki/Application_software`);
 

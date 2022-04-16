@@ -14,7 +14,7 @@ class Design extends Data {
 
     rootEndPoint;
 
-    constructor(label, id, description,designElementsId) {
+    constructor(label, id, description, designElementsId) {
 
         super()
         this.functionUnitMap = {}
@@ -29,11 +29,11 @@ class Design extends Data {
     set description(value) {
         if (Wiki.isWikiUrl(value)) {
             this.updateWikiDescription()
-        } 
+        }
         this._description = value
     }
     get description() {
-        return this.__WikiDescription||this._description
+        return this.__WikiDescription || this._description
     }
 
     async updateWikiDescription() {
@@ -49,51 +49,53 @@ class Design extends Data {
         if (ids && ids.length > 0) {
             //Can also use cache system to make things faster
             return ids.map(id => this.functionUnitMap[id]).filter(v => !!v);
+        } else if (ids && ids.length == 0) {
+            return []
         } else {
             return this.designElements
         }
     }
 
     add(designElement) {
-        
+
         if (this.functionUnitMap[designElement.id]) {
             this.functionUnitMap[designElement.id].update(designElement)
 
         } else {
             this.functionUnitMap[designElement.id] = designElement
             this.designElements.push(designElement)
-            designElement.parent=this;
+            designElement.parent = this;
         }
-        if(!this._types.find((v)=>v==designElement.type)){
+        if (!this._types.find((v) => v == designElement.type)) {
             this._types.push(designElement.type)
         }
         return this.functionUnitMap[designElement.id]
     }
-    addFromJSON(json){
-        var parsed= JSON.parse(json)
-        const label=parsed.label;
-        const id=parsed.id;
-        const description=parsed.description;
-        const designId=parsed.designId;
-        const type=parsed.designId;
-        this.add(new DesignElement(label,id,description,type,designId))
+    addFromJSON(json) {
+        var parsed = JSON.parse(json)
+        const label = parsed.label;
+        const id = parsed.id;
+        const description = parsed.description;
+        const designId = parsed.designId;
+        const type = parsed.designId;
+        this.add(new DesignElement(label, id, description, type, designId))
     }
-    async addAll(designElements){
-        (await this.loadDesignElements(designElements)).forEach(de=>this.add(de))
+    async addAll(designElements) {
+        (await this.loadDesignElements(designElements)).forEach(de => this.add(de))
     }
-    _types=[]
+    _types = []
     get types() {
         return [...this._types]
     }
 
     _flow;
 
-    get flow(){
+    get flow() {
         this._flow;
     }
 
-    set flow(value){
-        _flow=value;
+    set flow(value) {
+        _flow = value;
     }
 
     _flowConfig;
@@ -105,15 +107,15 @@ class Design extends Data {
         this.publish('change')
     }
 
-    getFlowActions(){
-        return (this.flowConfig.flowAction||{}).buttons||[]
+    getFlowActions() {
+        return (this.flowConfig.flowAction || {}).buttons || []
     }
 
     async loadDesignElements(designElementsId) {
         let designElements;
-        if(typeof designElementsId !='string'){
+        if (typeof designElementsId != 'string') {
             designElements = designElements
-        }else if (Utility.isJSURL(designElementsId)) {
+        } else if (Utility.isJSURL(designElementsId)) {
             designElements = (await import(designElementsId)).default;
         } else if (Utility.isFlowURL(designElementsId)) {
             designElements = Design.getNewInstance(await fetch(designElementsId));
@@ -122,35 +124,35 @@ class Design extends Data {
         } else if (Utility.isFlowUrlPath(designElementsId)) {
             designElements = Design.getNewInstance(await fetch(location.origin + designElementsId));
         } else {
-            
+
         }
         return designElements;
     }
-    toJSON (key) {
-        
+    toJSON(key) {
+
         return {
-            label:this.label,
-            id:this.id,
-            description:this.description,
-            designElements:this.designElements,
-            
+            label: this.label,
+            id: this.id,
+            description: this.description,
+            designElements: this.designElements,
+
         };
     }
 
-    fromJSON(json){
-        var parsed= JSON.parse(json)
-        this.label=parsed.label;
-        this.id=parsed.id;
-        this.description=parsed.description;
-        this.config=parsed.config
-        this.designElementsId=parsed.designElementsId;
-        (parsed.designElements||[]).forEach(designElement=>this.addFromJSON(designElement))
+    fromJSON(json) {
+        var parsed = JSON.parse(json)
+        this.label = parsed.label;
+        this.id = parsed.id;
+        this.description = parsed.description;
+        this.config = parsed.config
+        this.designElementsId = parsed.designElementsId;
+        (parsed.designElements || []).forEach(designElement => this.addFromJSON(designElement))
     }
-    async execute(...inputs){ 
-        console.log("Executing",JSON.stringify(this))   
+    async execute(...inputs) {
+        console.log("Executing", JSON.stringify(this))
         //return this.outputs.map(output=>output.execute(...inputs))
     }
-    
+
 
 }
 
@@ -170,7 +172,7 @@ class DesignElement extends Data {
         this.label = label;
         this.id = id;
         this.designId = designId;
-        this.config = config||{};
+        this.config = config || {};
         this.description = description;
     }
     _description;
@@ -178,7 +180,7 @@ class DesignElement extends Data {
         this._description = value
         if (Wiki.isWikiUrl(value)) {
             this.updateWikiDescription()
-        } 
+        }
     }
     get description() {
         return this._description
@@ -188,7 +190,7 @@ class DesignElement extends Data {
         this._Wikidescription = (await Wiki.fetchSummary(this.description)).description;
         this.publish('change')
     }
-    
+
     async getUi() {
         return null
     }
@@ -198,7 +200,7 @@ class DesignElement extends Data {
     previous() {
         return []
     }
-    
+
     update(designElement) {
         this.description = designElement.description
         this.type = designElement.type
@@ -206,56 +208,56 @@ class DesignElement extends Data {
         this.data = designElement.data;
         this.designId = designElement.designId;
     }
-    async toDesign(){
-        if(!this.design && this.designId){
+    async toDesign() {
+        if (!this.design && this.designId) {
             return await this.loadDesign(this.designId);
-        }else{
+        } else {
             return this.design
         }
     }
 
-    getRoot(root){
-        return this.root||this.parent.root||root||''
+    getRoot(root) {
+        return this.root || this.parent.root || root || ''
     }
 
-    async loadDesign(designId,root) {
+    async loadDesign(designId, root) {
         let design;
         if (Utility.isJSURL(designId)) {
             design = (await import(designId)).default;
         } else if (Utility.isFlowURL(designId)) {
             design = Design.getNewInstance(await fetch(designId));
         } else if (Utility.isJSUrlPath(designId)) {
-            design = (await import(this.getRoot(root)+designId)).default;
+            design = (await import(this.getRoot(root) + designId)).default;
         } else if (Utility.isFlowUrlPath(designId)) {
-            design = Design.getNewInstance( this.getRoot(root)+designId);
+            design = Design.getNewInstance(this.getRoot(root) + designId);
         } else {
             console.log('future')
         }
         return design;
     }
 
-    toJSON (key) {
-        
+    toJSON(key) {
+
         return {
-            label:this.label,
-            id:this.id,
-            description:this.description,
-            designId:this.designId            
+            label: this.label,
+            id: this.id,
+            description: this.description,
+            designId: this.designId
         };
     }
-    static getRootDomain(){
+    static getRootDomain() {
         return location.origin
     }
 
-    
-    get value(){
-        return this.parent.getElements(this.previous()).map(previous=>previous.execute())
+
+    get value() {
+        return this.parent.getElements(this.previous()).map(previous => previous.execute())
     }
 
-    async execute(){
+    async execute() {
         return await Promise.all(this.value);
     }
-    
+
 }
 
 
@@ -263,8 +265,8 @@ class DesignElement extends Data {
 
 class Input extends DesignElement {
     processIdentifiers;
-    constructor(label, id, description, processIdentifiers, designId,config) {
-        super(label, id, description, 'inputs', designId,config)
+    constructor(label, id, description, processIdentifiers, designId, config) {
+        super(label, id, description, 'inputs', designId, config)
         this.processIdentifiers = new Set(processIdentifiers)
     }
     next() {
@@ -280,7 +282,7 @@ class Process extends DesignElement {
     outputIdentifiers;
     inputIdentifiers;
 
-    constructor(label, id, description, designId, config,inputIdentifiers, outputIdentifiers) {
+    constructor(label, id, description, designId, config, inputIdentifiers, outputIdentifiers) {
         super(label, id, description, 'processes', designId, config)
         this.inputIdentifiers = new Set(inputIdentifiers)
         this.outputIdentifiers = new Set(outputIdentifiers)
@@ -320,8 +322,8 @@ class IODesign extends Design {
     outputs;
     processes;
 
-    constructor(label, id, description,designElementsId) {
-        super(label, id, description,designElementsId)
+    constructor(label, id, description, designElementsId) {
+        super(label, id, description, designElementsId)
         this.inputs = []
         this.outputs = []
         this.processes = []
@@ -343,7 +345,7 @@ class IODesign extends Design {
     addInput(input) {
         this.inputs.push(super.add(input))
 
-        this.getElements([...input.processIdentifiers]).forEach(fu => fu.inputIdentifiers.add(input.id))
+        this.getElements([...input.processIdentifiers || []]).forEach(fu => fu.inputIdentifiers.add(input.id))
 
 
         this.publish('change')
@@ -351,7 +353,7 @@ class IODesign extends Design {
     addOutput(output) {
         this.outputs.push(super.add(output))
 
-        this.getElements([...output.processIdentifiers]).forEach(fu => fu.outputIdentifiers.add(output.id))
+        this.getElements([...output.processIdentifiers || []]).forEach(fu => fu.outputIdentifiers.add(output.id))
 
         super.add(output)
         this.publish('change')
@@ -377,21 +379,21 @@ class IODesign extends Design {
     get types() {
         return ['inputs', 'processes', 'outputs']
     }
-    async execute(){    
-        return this.outputs.map(output=>output.execute())
+    async execute() {
+        return this.outputs.map(output => output.execute())
     }
 }
 
-class ProcessDesign extends IODesign{
-    
+class ProcessDesign extends IODesign {
+
 }
 
 class Step extends Process {
-    constructor(label, id, description, designId, config,inputIdentifiers, outputIdentifiers) {
+    constructor(label, id, description, designId, config, inputIdentifiers, outputIdentifiers) {
         super(label, id, description, 'step', designId, config)
         this.inputIdentifiers = new Set(inputIdentifiers)
         this.outputIdentifiers = new Set(outputIdentifiers)
-        
+
     }
 }
 
@@ -401,33 +403,36 @@ class SerialDesign extends IODesign {
     add(ioElement) {
         if (ioElement instanceof Step) {
             this.addStep(ioElement)
-        }else{
+        } else {
             super.add(ioElement)
         }
     }
-    addStep(step){
-        if(this.lastStep){
-            this.lastStep.outputIdentifiers.add(step.id)
+    addStep(step) {
+        if (this.lastStep) {
+            this.lastStep.outputIdentifiers = [step.id]
             step.inputIdentifiers.add(this.lastStep.id)
-        }else{
-            this.firstStep=step
+            step.outputIdentifiers = this.outputs.map(output => output.id)
+        } else {
+            this.firstStep = step
+            step.inputIdentifiers = this.inputs.map(input => input.id)
+            step.outputIdentifiers = this.outputs.map(output => output.id)
         }
-        
-        
-        this.lastStep=step;
+
+
+        this.lastStep = step;
         super.addProcess(step)
         //Need to find better way
-        step.type = 'step'+this.processes.length;
-        
+        step.type = 'step' + this.processes.length;
+
     }
-    async execute(){    
+    async execute() {
         return this.lastStep.execute()
     }
 
     get types() {
-        var steps=['inputs']
-        for(let i=1;i<=this.processes.length;i++){
-            steps.push('step'+i)
+        var steps = ['inputs']
+        for (let i = 1; i <= this.processes.length; i++) {
+            steps.push('step' + i)
         }
         steps.push('outputs')
         return steps;
@@ -445,7 +450,7 @@ class OptionalDesign extends IODesign {
 
 
 class ListDesign extends Design {
-    
+
 }
 
 const FlowDesigns = {
@@ -454,8 +459,8 @@ const FlowDesigns = {
     ParallelDesign,
     OptionalDesign,
     IODesign,
-    ListDesign                                                  
+    ListDesign
 }
 
 
-export { FlowDesigns, Design, Input, Output, Process,Step, DesignElement }
+export { FlowDesigns, Design, Input, Output, Process, Step, DesignElement }

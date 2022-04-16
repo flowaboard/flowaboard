@@ -1,4 +1,5 @@
-import Javascript,{JSInput,JSBody,JSOutput} from '../../../design/javascript.js';
+import Javascript from '../../../design/javascript.js';
+import {JSInput,JSBody,JSOutput} from '../../../design/javascriptElements.js';
 import { DesignElement, FlowDesigns, Process, Input, Output } from '/flowdesign/design.js';
 class JSVariableDesign extends FlowDesigns.IODesign {
     constructor(variable,description){
@@ -9,11 +10,16 @@ class JSVariableDesign extends FlowDesigns.IODesign {
         return this.variable
     }
     fromAst(ast){
-        console.log(ast)
-        
-        this.add(new JSVariableInput(ast.value,ast.value+'i','',[ast.value+'p']))
-        this.add(new JSVariableBody(ast.value,ast.value+'p'))
-        this.add(new JSVariableOutput(ast.value,ast.value+'o','',[ast.value+'p']))
+        this.debugger.log(ast.type,ast)
+        switch (ast.type) {
+            case "Identifier":                        
+                this.add(new JSVariableInput(ast.name,ast.name+'i','',[ast.name+'p']))
+                this.add(new JSVariableBody(ast.name,ast.name+'p'))
+                this.add(new JSVariableOutput(ast.name,ast.name+'o','',[ast.name+'p']))
+                break;
+            default:
+                break;
+        }
     }
 
 
