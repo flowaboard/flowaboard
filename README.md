@@ -10,7 +10,7 @@
   ***What is like to imagine flowly?***
   >Just think what you have , what you want and how will you have it. 
 
-  ***What do you mean my visualize flowly?***
+  ***What do you mean by visualize flowly?***
   >It will be graphical represnetation of a prototype, product or proceess will be visualized on 2D surfaces like your monitor or in 3D AR environment. 
   
 
