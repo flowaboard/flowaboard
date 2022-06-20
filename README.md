@@ -7,9 +7,11 @@
 
   Flowaborad is a graphical language platform which allows us to <a href="https://en.wikipedia.org/wiki/Design">design</a>, develop, test and simulate any prototype, product, or process. Anything we can imagine which has an order of execution can be imagined & visualized flowly.
 
-  What is like to think flowly? 
-  
-  Just think what you have , what you want and how will you have it. 
+  ***What is like to imagine flowly?***
+  >Just think what you have , what you want and how will you have it. 
+
+  ***What do you mean my visualize flowly?***
+  >It will be graphical represnetation of a prototype, product or proceess will be visualized on 2D surfaces like your monitor or in 3D AR environment. 
   
 
 
@@ -18,7 +20,7 @@
   
 # Now
 
-  https://flowaboard.github.io/
+  https://www.flowaboard.com/
   
 # Future
 
