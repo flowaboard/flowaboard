@@ -22,7 +22,7 @@
   },
   "scripts": {
     "start": "node back-end/node/index.js",
-    "start-dev": "nodemon back-end/index.js --ignore front-end",
+    "start-dev": "nodemon back-end/node/index.js --ignore front-end",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": "https://github.com/flow-aboard/flowaboard.git",

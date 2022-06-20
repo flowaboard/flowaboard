@@ -5,15 +5,13 @@
     <h1>FlowAbaord</h1>
   </div>
 
-  Flowaborad is knowledge dependency framework with inbuilt power to develop, test ,dedupe and simulate any knowledge.To flow abaord any knowledge we need to think flowly.
+  Flowaborad is a graphical language platform which allows us to <a href="https://en.wikipedia.org/wiki/Design">design</a>, develop, test and simulate any prototype, product, or process. Anything we can imagine which has an order of execution can be imagined & visualized flowly.
 
   What is like to think flowly? 
   
-  Just think what you have , what you want and how will you have it. Whenever we want something of physical existence we represent them using some abstract entities like maths,physics,program or business. 
+  Just think what you have , what you want and how will you have it. 
+  
 
-  Every abstract entity we define is part or builidng blocks of some bigger structure, design or architecture. Representing them using some single theory or infrastructure seems to be one of  humankind goal to solve mysteries of universe as well as meet the end needs. Well who knows why maths, physics or artificial intelligence or any abstract entity to represent physical existences was ever dscovered or invented. But for sure they always somehow extract,produces or achieve what we want from what we have.
-
-  Unfortunately if this abstract entities aren't collected, modified and rediscovered in some structured application there might be lot of redudant rediscoveries which we would like to avoid. There is always a question which needs to be answered, what we have learned and how much of we are using it. 
 
  
 
@@ -24,19 +22,30 @@
   
 # Future
 
-Flow aboard knowledge
+## Fix flowaborad home page 
+  - [ ] Add Description to home page
+  - [ ] Build logic to add, remove and design elements
+  - [ ] Build logic to save and load modified designs to git and local file.
+
+## Build flow Designs
+  - [x] Logic Design
+  - [x] Parellel Design
+  - [x] Serial Design
+  - [x] List Design
+
+## Flow aboard Abstarct Entiies
+  > Every abstract entity we define is part or builidng blocks of some bigger structure, design or architecture so giving them first tickets just seems right.
   1.  Abaord Maths
+      - Create repo under flowabord project
+      - Abaord sub abstract entities.
+      - Use readme as home page
   2.  Abaord Physics
   3.  Abaord Chemistry
   4.  Aboard Programming
   5.  Abaord AI
   6.  Abaord Business
 
-Build new flow Designs
-  1. Logic Design
-  2. Parellel Design
-  3. Serial Design
-  4. List Design
+
   
 
 # Contribute
