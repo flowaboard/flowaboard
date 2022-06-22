@@ -2,16 +2,16 @@
 
   <div align="center">
     <img src="front-end/assets/icon200.png">
-    <h1>FlowAbaord</h1>
+    <h1>FlowAboard</h1>
   </div>
 
   Flowaborad is a graphical language platform which allows us to <a href="https://en.wikipedia.org/wiki/Design">design</a>, develop, test and simulate any prototype, product, or process. Anything we can imagine which has an order of execution can be imagined & visualized flowly.
 
   ***What is like to imagine flowly?***
-  >Just think what you have , what you want and how will you have it. 
+  >Just think what you have, what you want and how will you have it. 
 
-  ***What do you mean by visualize flowly?***
-  >It will be graphical represnetation of a prototype, product or proceess will be visualized on 2D surfaces like your monitor or in 3D AR environment. 
+  ***What do we mean by visualize flowly?***
+  >Graphical representation of a prototype, product or proceess with moving elements flowing in and out of still elements and presenting a dynamic visual representaion. 
   
 
 
@@ -51,18 +51,18 @@
 
 # Contribute
 
-**If you want to contribute to Flowabaord, be sure to review the
-[contribution guidelines](CONTRIBUTING.md). This project adheres to Flowabaord's
+**If you want to contribute to FlowAboard, be sure to review the
+[contribution guidelines](CONTRIBUTING.md). This project adheres to FlowAboard's
 [code of conduct](CODE_OF_CONDUCT.md). By participating, you are expected to
 uphold this code.**
 
-**We use [GitHub issues](https://github.com/Flowabaord/flowabaord/issues) for
+**We use [GitHub issues](https://github.com/FlowAboard/FlowAboard/issues) for
 tracking requests and bugs, please see
-[Flowabaord Discuss](https://groups.google.com/g/flowabaord)
+[FlowAboard Discuss](https://groups.google.com/g/FlowAboard)
 for general questions and discussion, and please direct specific questions to
-[Stack Overflow](https://stackoverflow.com/questions/tagged/Flowabaord).**
+[Stack Overflow](https://stackoverflow.com/questions/tagged/FlowAboard).**
 
-The Flowabaord project strives to abide by generally accepted best practices in
+The FlowAboard project strives to abide by generally accepted best practices in
 open-source software development:
 
 # Build Status

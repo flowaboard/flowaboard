@@ -6,31 +6,31 @@ import { Flow } from './ui/element-group/flow.js'
 import Debugger from './lib/debugger.js';
 
 class FlowAboard {
-    skipWindowHistory=true;
-    debugger = new Debugger(true,'FlowAboard')
+    skipWindowHistory = true;
+    debugger = new Debugger(true, 'FlowAboard')
     parent = document.body;
     graph = new WeakMap();
-    pushState(present, future,skipWindowHistory) {
-        if(future instanceof FlowDesigns.ListDesign && !skipWindowHistory){
-            window.history.pushState({},future.label,(location.pathname=='/'?'':location.pathname)+"/"+future.id)
+    pushState(present, future, skipWindowHistory) {
+        if (future instanceof FlowDesigns.ListDesign && !skipWindowHistory) {
+            window.history.pushState({}, future.label, (location.pathname == '/' ? '' : location.pathname) + "/" + future.id)
         }
         this.graph.set(future, present)
     }
-    popState(present,skipWindowHistory) {
+    popState(present, skipWindowHistory) {
         let past = this.graph.get(present)
-        if(present instanceof FlowDesigns.ListDesign && past && !skipWindowHistory){
+        if (present instanceof FlowDesigns.ListDesign && past && !skipWindowHistory) {
             window.history.back()
         }
-        
+
         return past;
     }
-    historyListener(e){
+    historyListener(e) {
         let currentDesign = this.getCurrentDesign()
-        let parentdesign = this.popState(currentDesign,this.skipWindowHistory)
-        if (parentdesign){
+        let parentdesign = this.popState(currentDesign, this.skipWindowHistory)
+        if (parentdesign) {
             this.load(parentdesign)
 
-        }else{
+        } else {
             e.preventDefault()
         }
     }
@@ -82,31 +82,31 @@ class FlowAboard {
 
         return this.flow;
     }
-    async getOutputUi(){
-        
+    async getOutputUi() {
+
     }
     async openFlow(target, designElement) {
         let currentDesign = target.value
         let futuredesign = await designElement.toDesign()
         if (futuredesign) {
             this.load(futuredesign)
-            this.pushState(currentDesign, futuredesign ,this.skipWindowHistory)
+            this.pushState(currentDesign, futuredesign, this.skipWindowHistory)
         }
     }
     async closeFlow(traget, designElement) {
         let currentDesign = traget.value
-        let parentdesign = this.popState(currentDesign,this.skipWindowHistory)
+        let parentdesign = this.popState(currentDesign, this.skipWindowHistory)
         if (parentdesign)
             this.load(parentdesign)
     }
 
     async getElement(elementId) {
-        
+
     }
-    getCurrentDesign(){
+    getCurrentDesign() {
         return this.flow.value;
     }
-    getPreviousDesign(){
+    getPreviousDesign() {
         return this.flow.value.parent;
     }
 
