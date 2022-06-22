@@ -128,6 +128,7 @@ class FlowElement extends Element {
             display: flex;
             align-items: center;
             justify-content: center;
+            text-transform: capitalize;
         }
         :host(.active) .content{
             width: calc(100% - 2rem);
@@ -1030,7 +1031,6 @@ class Flow extends ElementGroup {
 
 
         this.performanceStart(`Processing flowElements took`)
-
 
 
 
