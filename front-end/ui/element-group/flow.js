@@ -3,7 +3,6 @@ import Element from '../element/element.js'
 import 'https://cdn.jsdelivr.net/npm/d3@6.6.0/dist/d3.min.js'
 import { Next } from '../element-group/next.js'
 
-import FlowAboard from '../../flowaboard.js'
 
 
 class FlowUtility {
@@ -65,13 +64,15 @@ class FlowUtility {
 
 class FlowElement extends Element {
 
+    debug=true;
+
     constructor() {
         super();
     }
 
 
     static getSample() {
-        const flowElement = document.createElement('ui-flow-element')
+        const flowElement = document.createElement(FlowElement.tag)
         return flowElement
     }
 
@@ -175,14 +176,6 @@ class FlowElement extends Element {
             border-radius: 0.5rem;
         }
         `
-    }
-    async getFlowUi(parent) {
-        if (!this.flowAboard) {
-            this.flowAboard = new FlowAboard(parent);
-        }
-        const flow = await this.flowAboard.load(functionListDesign)
-        this.debugger.log(flow)
-        return flow
     }
     get HTML() {
         return (async () => {
@@ -442,8 +435,8 @@ class FlowElement extends Element {
 
         [...this.inLinks].forEach((link, i) => {
 
-            var x2 = this.getBoundingClientRect().x;
-            var y2 = this.getBoundingClientRect().y;
+            var x2 = (this.getBoundingClientRect().x - this.parentFlow.getBoundingClientRect().x);
+            var y2 = (this.getBoundingClientRect().y - this.parentFlow.getBoundingClientRect().y);
             var width2 = this.getBoundingClientRect().width;
             var height2 = this.getBoundingClientRect().height;
             link.setAttribute("x2", x2 + (isEven ? (-8) : (-6)));
@@ -453,15 +446,17 @@ class FlowElement extends Element {
 
     updateLinkTail() {
         [...this.outLinks].forEach((link) => {
-            var x1 = this.getBoundingClientRect().x;
-            var y1 = this.getBoundingClientRect().y;
 
+            var x1 = (this.getBoundingClientRect().x - this.parentFlow.getBoundingClientRect().x);
+            var y1 = (this.getBoundingClientRect().y - this.parentFlow.getBoundingClientRect().y);
             var width1 = this.getBoundingClientRect().width;
             var height1 = this.getBoundingClientRect().height;
 
 
             link.setAttribute("x1", x1 + width1);
             link.setAttribute("y1", y1 + height1 / 2);
+
+            console.log("Set Dimenions", this, x1, y1, width1, height1, link)
         })
     }
 
@@ -639,7 +634,7 @@ class Flow extends ElementGroup {
         this.handleActiveListner = this.handleActive.bind(this)
         this.handleInactiveListner = this.handleInactive.bind(this)
         this.handleFocusListner = this.handleFocus.bind(this)
-        this.handleSVGResizeListner = this.handleSVGResize.bind(this)
+        this.handleResizeListner = this.handleResize.bind(this)
         this.handleKeyPressListner = this.handleKeyPress.bind(this)
         this.handleFlowListner = this.handleFlow.bind(this)
 
@@ -649,18 +644,35 @@ class Flow extends ElementGroup {
     get CSS() {
         return `
         :host,:host(.relative) {
-            display: block;
-            height:100%;
-            width: 100%;
+            display: block; 
+
+            wwidth: 100%;
+            hheight: 100%;
+            width: 90%;
+            background: #27282c;
+            color: cornflowerblue;
+            height: 70%;
+
             transform-style: preserve-3d;
             overflow:hidden;            
             position: relative;
+            box-shadow: 0px 0px 7px 2px cornflowerblue;
+            border-radius: 0.5rem;
+        } 
+        :host::-webkit-scrollbar {
+            width: 0.6rem;
         }
+        :host::-webkit-scrollbar-thumb {
+            background: #2f606a;
+            border-radius: 0.5rem;
+        }
+        :host::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px #27282c;
+            border-radius: 0.5rem;
+        } 
 
         :host(.flex){
             position: relative;
-            width: 100%;
-            height: calc(100%);
             display: flex;
             justify-content: space-evenly;
             align-items: center;    
@@ -668,7 +680,8 @@ class Flow extends ElementGroup {
             flex-wrap: wrap;
             overflow: auto;
             top: 0; 
-        }        
+        }
+               
         
         svg{
             height: 100%;
@@ -763,7 +776,7 @@ class Flow extends ElementGroup {
         
         
         .button {
-            background-color: #96b4ce40;
+            background-color: #394753;
             border: none;
             text-align: center;
             text-decoration: none;
@@ -787,7 +800,13 @@ class Flow extends ElementGroup {
             margin: 0.5rem 0.2rem;
             padding: 0.5rem 1rem;
         }
-        
+        .slot-actions{
+            position: ${this.isOverflown()?'sticky':'absolute'};
+            display: block;
+            bottom: 0;
+            width: 100%;
+        }
+
         .actions .button.hover-visible {
             width: 0;
             padding: 0;
@@ -800,7 +819,7 @@ class Flow extends ElementGroup {
             padding: 0.5rem 1rem;
         }
         .actions{
-            position: fixed;
+            position: sticky;
             bottom: 0;
             right: 0;
             display: flex;
@@ -845,7 +864,7 @@ class Flow extends ElementGroup {
             <slot>
                 <svg></svg>
             </slot>
-            <slot name="actions">
+            <slot name="actions" class="slot-actions">
                 <div class="actions">
                    ${this.actionHtml}
                     
@@ -859,9 +878,12 @@ class Flow extends ElementGroup {
         <button class="button close" id="close"><i class="fas fa-times"></i></button>
         `
     }
+    isOverflown() {
+        return this.scrollHeight > this.clientHeight || this.scrollWidth > this.clientWidth;
+    }
     attachEventHandlers() {
-        FlowUtility.subscribeResize(this, this.handleSVGResizeListner.bind(this))
-        window.addEventListener("resize", this.handleSVGResizeListner)
+        FlowUtility.subscribeResize(this, this.handleResizeListner.bind(this))
+        window.addEventListener("resize", this.handleResizeListner)
         document.addEventListener("keydown", this.handleKeyPressListner)
 
         this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);
@@ -871,7 +893,7 @@ class Flow extends ElementGroup {
 
     }
     removeEventHandlers() {
-        window.removeEventListener("resize", this.handleSVGResizeListner)
+        window.removeEventListener("resize", this.handleResizeListner)
         document.removeEventListener("keydown", this.handleKeyPressListner)
 
     }
@@ -1273,8 +1295,8 @@ class Flow extends ElementGroup {
         return link.node();
     }
 
-    handleSVGResize() {
-        this.debugger.log('handleSVGResize updateSVG')
+    handleResize() {
+        this.debugger.log('handleResize updateSVG')
         this.updateSVG()
     }
 

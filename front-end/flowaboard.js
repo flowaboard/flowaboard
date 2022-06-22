@@ -3,24 +3,11 @@ import { Design, DesignElement, FlowDesigns } from './flowdesign/design.js';
 
 import { Flow } from './ui/element-group/flow.js'
 
-import Element from './ui/element/element.js'
-
-class Designs {
-    static designMap = new Map()
-    static put(designId, designInfo) {
-        Designs.designMap.set(designId, designInfo);
-        designInfo.path = Utility.getUrlFileName();
-    }
-    static get(designId) {
-        Designs.designMap.get(designId).design
-    }
-
-
-}
-
+import Debugger from './lib/debugger.js';
 
 class FlowAboard {
-
+    skipWindowHistory=true;
+    debugger = new Debugger(true,'FlowAboard')
     parent = document.body;
     graph = new WeakMap();
     pushState(present, future,skipWindowHistory) {
@@ -39,7 +26,7 @@ class FlowAboard {
     }
     historyListener(e){
         let currentDesign = this.getCurrentDesign()
-        let parentdesign = this.popState(currentDesign)
+        let parentdesign = this.popState(currentDesign,this.skipWindowHistory)
         if (parentdesign){
             this.load(parentdesign)
 
@@ -63,13 +50,13 @@ class FlowAboard {
 
             return flow
         } catch (error) {
-            console.error(error)
+            this.debugger.error(error)
         }
 
     }
     async getFlowUi() {
 
-        let flow = this.parent.querySelector('ui-flow')
+        let flow = this.parent.querySelector(Flow.tag)
         if (this.flow) {
             return flow
         }
@@ -78,7 +65,7 @@ class FlowAboard {
 
 
         this.flow.addEventListener('openflow', async (e) => {
-            console.log('flow', e.detail.value)
+            this.debugger.log('flow', e.detail.value)
             if (e.detail.value) {
                 this.openFlow(e.target, e.detail.value)
 
@@ -86,7 +73,7 @@ class FlowAboard {
 
         })
         this.flow.addEventListener('closeflow', async (e) => {
-            console.log('flow', e.detail.value)
+            this.debugger.log('flow', e.detail.value)
             if (e.detail.value) {
                 this.closeFlow(e.target, e.detail.value)
             }
@@ -103,12 +90,12 @@ class FlowAboard {
         let futuredesign = await designElement.toDesign()
         if (futuredesign) {
             this.load(futuredesign)
-            this.pushState(currentDesign, futuredesign)
+            this.pushState(currentDesign, futuredesign ,this.skipWindowHistory)
         }
     }
     async closeFlow(traget, designElement) {
         let currentDesign = traget.value
-        let parentdesign = this.popState(currentDesign)
+        let parentdesign = this.popState(currentDesign,this.skipWindowHistory)
         if (parentdesign)
             this.load(parentdesign)
     }

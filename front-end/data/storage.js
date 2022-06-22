@@ -1,5 +1,6 @@
 import { Data } from "./data";
-import { Octokit, App } from "https://cdn.skypack.dev/octokit";
+import { Octokit } from "https://cdn.skypack.dev/@octokit/rest";
+import { createTokenAuth } from "https://cdn.skypack.dev/@octokit/auth-token";
 class DataBase extends Data{
     insert(){
 
@@ -12,13 +13,14 @@ class DataBase extends Data{
     }
 }
 class GitStorage extends DataBase{
+    token;
     constructor(){
     }
 
-    login(type){
+    login(type,creds){
         switch (type) {
             case 'Personal Access Token':
-                this.debugger.loginByPersonalAccessToken()
+                this.loginByPersonalAccessToken(creds.token)
                 break;
         
             default:
@@ -30,6 +32,7 @@ class GitStorage extends DataBase{
         console.log(Octokit)
         const auth = createTokenAuth(token);
         const { token } = await auth();
+        this.token = token;
         console.log(token)
     }
     
