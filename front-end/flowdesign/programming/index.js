@@ -1,4 +1,4 @@
-import { Design, DesignElement, FlowDesigns } from  '/flowdesign/design.js'
+import { Design, DesignElement, FlowDesigns } from  '../design.js'
 
 
 var programmingDesign = new FlowDesigns.ListDesign('Programming', 'programming', `https://en.wikipedia.org/wiki/Computer_programming`);

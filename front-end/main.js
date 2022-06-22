@@ -13,7 +13,9 @@ var paths = location.pathname.split('/')
 let currentDesignElement, currentDesign;
 for (const path of paths) {
     if (path == '') {
-        currentDesignElement = await new DesignElement('Abstract', 'abstract', 'Abstract designs', 'flow-info', location.origin + '/flowdesign/abstract/index.js')
+        //currentDesignElement = await new DesignElement('Abstract', 'abstract', 'Abstract designs', 'flow-info', location.origin + '/flowdesign/abstract/index.js')
+        currentDesignElement = await new DesignElement('Abstract', 'abstract', 'Abstract designs', 'flow-info', "https://flowaboard.github.io/abstract/index.js")
+
         currentDesign = await currentDesignElement.toDesign()
     } else {
         currentDesignElement = currentDesign.getElement(path)
