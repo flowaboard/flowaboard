@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+		"target": "ES6",
+        "baseUrl": "./",
+        "paths": {
+            "*": ["./front-end/*"]
+        }
+	},
+    "include": ["front-end/flowdesign/**/*","front-end/data/**/*","front-end/lib/**/*"]
+}

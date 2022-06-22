@@ -16,12 +16,13 @@
     "swiper": "^5.4.5"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7",
-    "heroku": "^7.47.11"
+    "@babel/parser": "^7.15.3",
+    "heroku": "^7.47.11",
+    "nodemon": "^2.0.7"
   },
   "scripts": {
-    "start": "node back-end/index.js",
-    "start-dev": "nodemon back-end/index.js --ignore front-end",
+    "start": "node back-end/node/index.js",
+    "start-dev": "nodemon back-end/node/index.js --ignore front-end",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": "https://github.com/flow-aboard/flowaboard.git",

@@ -1,4 +1,4 @@
-import {Element} from './element.js'
+import Element from'./element.js'
 class Output extends Element{
     constructor() {
         super();

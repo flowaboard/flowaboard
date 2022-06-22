@@ -1,16 +1,16 @@
 import { ElementGroup } from '../element-group/group.js'
-import { Element } from '../element/element.js'
-//import '../../../node_modules/d3/dist/d3.js'
+import Element from '../element/element.js'
 import 'https://cdn.jsdelivr.net/npm/d3@6.6.0/dist/d3.min.js'
 import { Next } from '../element-group/next.js'
-//import '../../node_modules/d3-3d/src/3d.js'
+
+
 
 class FlowUtility {
 
 
     static getEvenlySpacedFromCenter(totalDivisonAvailable, divisonElements, divisonElementDimension, minseparation) {
-        if(totalDivisonAvailable==0){
-            return {coordinates:[],divisonElementDimensions:[]}
+        if (totalDivisonAvailable == 0) {
+            return { coordinates: [], divisonElementDimensions: [] }
         }
         //console.log('getEvenlySpacedFromCenter',totalDivisonAvailable, divisonElements, divisonElementDimension, minseparation)
         var coordinates = [], divisonElementDimensions = []
@@ -64,13 +64,15 @@ class FlowUtility {
 
 class FlowElement extends Element {
 
+    debug=true;
+
     constructor() {
         super();
     }
 
 
     static getSample() {
-        const flowElement = document.createElement('ui-flow-element')
+        const flowElement = document.createElement(FlowElement.tag)
         return flowElement
     }
 
@@ -108,6 +110,9 @@ class FlowElement extends Element {
         :host{
             display:flex;
             width: 100%;
+        }
+        :host(.active){
+            box-shadow: 2px 2px 6px 3px grey;
         }
         :host.active>span{
             margin: 0;
@@ -154,7 +159,8 @@ class FlowElement extends Element {
         }   
         .action:hover{
             visibility: visible;
-        }   
+        } 
+          
         ui-flow{
             box-shadow: 2px 2px 12px 2px grey;
             border-radius: 0.5rem;
@@ -173,34 +179,40 @@ class FlowElement extends Element {
         `
     }
     get HTML() {
-        return `
-            <button class="action add-previous" value="add-previous">+</button>
-            <div class="content ${this.type}">
-                
-                    ${this.value.label}
-                
-            </div> 
-            <button class="action add-next" value="add-next" >+</button>    
-        `
+        return (async () => {
+            const content = await this.value.getUi(this.state, this.shadowRoot)
+            if (content) {
+                return content
+            } else {
+                return `
+                <button class="action add-previous" value="add-previous">+</button>
+                <div class="content ${this.type}">
+                    
+                        ${this.value.label}
+                    
+                </div> 
+                <button class="action add-next" value="add-next" >+</button>    
+            `
+            }
+        })()
+
 
     }
 
     attachEventHandlers() {
         FlowUtility.subscribeResize(this, this.handleResize.bind(this))
 
-        this.shadowRoot.querySelector('.add-previous').onclick = this.handleAdd.bind(this);
-        this.shadowRoot.querySelector('.add-next').onclick = this.handleAdd.bind(this);
+        // this.shadowRoot.querySelector('.add-previous').onclick = this.handleAdd.bind(this);
+        // this.shadowRoot.querySelector('.add-next').onclick = this.handleAdd.bind(this);
 
-        if (!this.isActive)
-            this.attachInactiveEventHandlers()
+        this.attachInactiveEventHandlers()
     }
     removeEventHandlers() {
-        if (this.isActive)
-            this.removeInactiveEventHandlers()
+        this.removeInactiveEventHandlers()
     }
 
     afterRender() {
-        this.updateView()
+        this.handleAction('loaded')
     }
     attachInactiveEventHandlers() {
         this.addEventListener("mousedown", this.handleMouseDown);
@@ -229,7 +241,7 @@ class FlowElement extends Element {
     }
 
     handleAdd(e) {
-        console.log(e.value)
+        this.debugger.log(e.value)
     }
 
     //Event Handlers
@@ -249,37 +261,55 @@ class FlowElement extends Element {
         this.updateLink()
     }
     handleResize() {
-        //console.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
+        //this.debugger.log('Handling Resixe for',this.type,this.x,this.y,this.width,this.height,this.getBoundingClientRect().width,this.getBoundingClientRect().height)
 
         this.coordinates(this.x, this.y, this.z)//Added to handle scenerio when coordinates depends on srinking size based on dimension e.g when a element is converted to active
 
 
         this.updateLink(true)//Updates Links on window or element resize
     }
-
+    actionConfig={
+        'click': {action:'active',state:'default'},
+        'hover': 'focus',
+        'blur': 'blur',
+        'loaded': ''
+    }
     //Event to Action Converter
     handleAction(event) {
-        const action = this.parentFlow.config.action[event]
+        const actionConfig = this.parentFlow.config.elementAction[event]?this.parentFlow.config.elementAction[event]:this.actionConfig[event]
+        const action = actionConfig.action || actionConfig
+        const state = actionConfig.state
         switch (action) {
             case 'active':
-                this.active()
-                break;
+                if (this.state == state || !state) {
+                    this.active()
+                    break;
+                }
             case 'focus':
-                this.focus()
-                break;
+                if (this.state == state || !state) {
+                    this.focus()
+                    break;
+                }
             case 'blur':
-                this.blur()
-                break;
+                if (this.state == state || !state) {
+                    this.blur()
+                    break;
+                }
             case 'hide':
-                this.hide()
-                break;
+                if (this.state == state || !state) {
+                    this.hide()
+                    break;
+                }
             case 'show':
-                this.show()
-                break;
+                if (this.state == state || !state) {
+                    this.show()
+                    break;
+                }
             case 'flow':
-                this.flow()
-                break;
-
+                if (this.state == state || !state) {
+                    this.flow()
+                    break;
+                }
             default:
                 break;
         }
@@ -296,7 +326,7 @@ class FlowElement extends Element {
         this.style.width = width;
         this.style.height = height;
 
-        //console.log("Set Dimenions",width,height)
+        //this.debugger.log("Set Dimenions",width,height)
         if (!this.isActive)
             this.inactiveState = {
                 ...this.inactiveState, ...{
@@ -317,7 +347,7 @@ class FlowElement extends Element {
         this.style.left = x - this.getBoundingClientRect().width / 2;//center the component
         this.style.top = y - this.getBoundingClientRect().height / 2;//center the component;
 
-        //console.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
+        //this.debugger.log("Set Coordinates",x,this.style.left,this.width,this.getBoundingClientRect().width,this.value.id)
 
         if (this.style.top > this.parentFlow.height / 2)
             this.style.transformOrigin = "left center"
@@ -393,7 +423,7 @@ class FlowElement extends Element {
                     //this.coordinates(this.x,this.y,this.z)// to update width based calculation              
                     this.updateLinkHead();
                     this.updateLinkTail();
-                    //console.log('updateLink')
+                    //this.debugger.log('updateLink')
                 }
             });
         }
@@ -406,8 +436,8 @@ class FlowElement extends Element {
 
         [...this.inLinks].forEach((link, i) => {
 
-            var x2 = this.getBoundingClientRect().x;
-            var y2 = this.getBoundingClientRect().y;
+            var x2 = (this.getBoundingClientRect().x - this.parentFlow.getBoundingClientRect().x);
+            var y2 = (this.getBoundingClientRect().y - this.parentFlow.getBoundingClientRect().y);
             var width2 = this.getBoundingClientRect().width;
             var height2 = this.getBoundingClientRect().height;
             link.setAttribute("x2", x2 + (isEven ? (-8) : (-6)));
@@ -417,29 +447,33 @@ class FlowElement extends Element {
 
     updateLinkTail() {
         [...this.outLinks].forEach((link) => {
-            var x1 = this.getBoundingClientRect().x;
-            var y1 = this.getBoundingClientRect().y;
 
+            var x1 = (this.getBoundingClientRect().x - this.parentFlow.getBoundingClientRect().x);
+            var y1 = (this.getBoundingClientRect().y - this.parentFlow.getBoundingClientRect().y);
             var width1 = this.getBoundingClientRect().width;
             var height1 = this.getBoundingClientRect().height;
 
 
             link.setAttribute("x1", x1 + width1);
             link.setAttribute("y1", y1 + height1 / 2);
+
+            console.log("Set Dimenions", this, x1, y1, width1, height1, link)
         })
     }
 
     //Flow Element State handlers
     focus() {
+        return
         //this.style.transformOrigin="left center"
-        this.classList.add('focus')
+        this.state = "focus";
         var event = new CustomEvent("focus");
         this.dispatchEvent(event);
 
         this.updateLink()
     }
     blur() {
-        this.classList.remove('focus')
+        return
+        this.state = "default";
 
         //this.style.transformOrigin=null
 
@@ -468,25 +502,23 @@ class FlowElement extends Element {
 
     inactiveState = {}
 
+    get isActive() {
+        return this.state == 'active'
+    }
     active() {
+        this.state = "active"
 
-        this.blur()
-        this.removeInactiveEventHandlers()
-        this.isActive = true
-        this.classList.add("active")
-        var { width, height } = this.parentFlow.getFlowElementDimension(this)
-        this.dimensions(width, height)
         this.animate({
             duration: 600,
             timing: function (timeFraction) {
                 return timeFraction;
             },
             draw: (progress) => {
-                var { x, y } = this.parentFlow.getFlowElementCoordinates(this)
-                this.coordinates(x, y)
+                this.parentFlow.update()
             }
         });
-        this.updateView('active')
+
+
 
         var event = new CustomEvent("active");
         this.dispatchEvent(event);
@@ -494,34 +526,27 @@ class FlowElement extends Element {
     }
 
     inactive() {
-        this.attachInactiveEventHandlers()
-        this.isActive = false
-        this.classList.remove("active")
+        
+        this.state = "default";     
 
-        //console.log(this.inactiveState)        
-
-        this.dimensions(this.inactiveState.width, this.inactiveState.height, this.inactiveState.depth)
+        
         this.animate({
             duration: 600,
             timing: function (timeFraction) {
                 return timeFraction;
             },
             draw: (progress) => {
-                var { x, y } = this.parentFlow.getFlowElementCoordinates(this)
-                this.coordinates(x, y)
+                this.parentFlow.update()
             }
         });
-
-        this.updateView('inactive')
-
-        this.blur()
+        
         var event = new CustomEvent("inactive");
         this.dispatchEvent(event);
 
     }
     hide() {
         this.removeInactiveEventHandlers()
-        this.classList.add('hidden');
+        this.state = "hidden";
         [...this.inLinks, ...this.outLinks].forEach((link) => {
             link.classList.add('hidden')
         })
@@ -529,7 +554,7 @@ class FlowElement extends Element {
     }
     show() {
         this.attachInactiveEventHandlers()
-        this.classList.remove('hidden');
+        this.state = "default";
         [...this.inLinks, ...this.outLinks].forEach((link) => {
             link.classList.remove('hidden')
         })
@@ -540,27 +565,22 @@ class FlowElement extends Element {
         this.dispatchEvent(event);
     }
 
-    getState() {
-        if (this.isActive) return 'active';
+    _state
+    get state() {
+        return this._state || "default";
     }
 
-
-    content
-    async updateView(state) {
-
-        const content = (await this.value.getUi(state,this.shadowRoot))||this.shadowRoot.querySelector('.content')
-        if (content && this.content && content != this.content){
-            this.shadowRoot.replaceChild(content,this.content)
-            this.content = content                        
-        }else if(!content){
+    set state(value) {
+        if (!this._state != value) {
+            this.classList.remove(this._state)
+            this._state = value;
+            this.classList.add(value)
             this.render()
-            this.content = this.shadowRoot.querySelector('.content')
-        }else if(!this.content){
-            this.content = this.shadowRoot.querySelector('.content')
         }
-
-
     }
+
+
+
     //Utilities    
     animate({ duration, draw, timing }) {
 
@@ -581,11 +601,12 @@ class FlowElement extends Element {
         });
     }
 
+    static tag = 'ui-flow-element'
 
 
 
 }
-Element.register('ui-flow-element', FlowElement);
+Element.register(FlowElement.tag, FlowElement);
 
 
 class Flow extends ElementGroup {
@@ -597,13 +618,14 @@ class Flow extends ElementGroup {
     config;
     defaultConfig = {
         active: {},
-        action: {
-            'click': 'active',
-            'hover': 'focus',
-            'blur': 'blur',
+        elementAction: {
+            
+        },
+        flowAction: {
+            "execute-button": "execute",            
             'left-key': 'previous',
             'right-key': 'next',
-            'down-key': 'sibling-based-on-previous'
+            'down-key': 'sibling-based-on-previous',
         }
     }
     constructor() {
@@ -613,7 +635,7 @@ class Flow extends ElementGroup {
         this.handleActiveListner = this.handleActive.bind(this)
         this.handleInactiveListner = this.handleInactive.bind(this)
         this.handleFocusListner = this.handleFocus.bind(this)
-        this.handleSVGResizeListner = this.handleSVGResize.bind(this)
+        this.handleResizeListner = this.handleResize.bind(this)
         this.handleKeyPressListner = this.handleKeyPress.bind(this)
         this.handleFlowListner = this.handleFlow.bind(this)
 
@@ -623,25 +645,44 @@ class Flow extends ElementGroup {
     get CSS() {
         return `
         :host,:host(.relative) {
-            display: block;
-            height:100%;
-            width: 100%;
+            display: block; 
+
+            wwidth: 100%;
+            hheight: 100%;
+            width: 90%;
+            background: #27282c;
+            color: cornflowerblue;
+            height: 70%;
+
             transform-style: preserve-3d;
             overflow:hidden;            
             position: relative;
+            box-shadow: 0px 0px 7px 2px cornflowerblue;
+            border-radius: 0.5rem;
+        } 
+        :host::-webkit-scrollbar {
+            width: 0.6rem;
         }
+        :host::-webkit-scrollbar-thumb {
+            background: #2f606a;
+            border-radius: 0.5rem;
+        }
+        :host::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px #27282c;
+            border-radius: 0.5rem;
+        } 
 
         :host(.flex){
             position: relative;
-            width: 100%;
-            height: calc(100%);
             display: flex;
             justify-content: space-evenly;
-            align-items: center;
+            align-items: center;    
+            /**align-content: center;**/ /**Scroll Issue**/
             flex-wrap: wrap;
             overflow: auto;
-            top: 0;        
-        }        
+            top: 0; 
+        }
+               
         
         svg{
             height: 100%;
@@ -736,7 +777,7 @@ class Flow extends ElementGroup {
         
         
         .button {
-            background-color: #96b4ce40;
+            background-color: #394753;
             border: none;
             text-align: center;
             text-decoration: none;
@@ -757,16 +798,29 @@ class Flow extends ElementGroup {
             transform: scale(1);
 
             line-height: 1rem;
-            margin: 0.5rem;
-            margin-right:2rem;
+            margin: 0.5rem 0.2rem;
             padding: 0.5rem 1rem;
         }
-        
-        .button:hover {
-            background-color: #f1f1f1;
+        .slot-actions{
+            position: ${this.isOverflown()?'sticky':'absolute'};
+            display: block;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .actions .button.hover-visible {
+            width: 0;
+            padding: 0;
+            margin: 0;
+            overflow:hidden;
+        }
+        .actions:hover .button.hover-visible {
+            width: auto;
+            margin: 0.5rem 0.2rem;
+            padding: 0.5rem 1rem;
         }
         .actions{
-            position: fixed;
+            position: sticky;
             bottom: 0;
             right: 0;
             display: flex;
@@ -811,37 +865,41 @@ class Flow extends ElementGroup {
             <slot>
                 <svg></svg>
             </slot>
-            <slot name="actions">
+            <slot name="actions" class="slot-actions">
                 <div class="actions">
-                    <button class="button close" id="close"><i class="fas fa-times"></i></button>
+                   ${this.actionHtml}
+                    
                 </div>
             </slot>
         `
     }
+    get actionHtml() {
+        return `
+        ${this.value.getFlowActions().map(action => `<button class="button ${action.id} ${action.className || ''}" id="${action.id}">${action.label}</button>`).join('\n')}
+        <button class="button close" id="close"><i class="fas fa-times"></i></button>
+        `
+    }
+    isOverflown() {
+        return this.scrollHeight > this.clientHeight || this.scrollWidth > this.clientWidth;
+    }
     attachEventHandlers() {
-        FlowUtility.subscribeResize(this, this.handleSVGResizeListner.bind(this))
-        window.addEventListener("resize", this.handleSVGResizeListner)
+        FlowUtility.subscribeResize(this, this.handleResizeListner.bind(this))
+        window.addEventListener("resize", this.handleResizeListner)
         document.addEventListener("keydown", this.handleKeyPressListner)
 
         this.shadowRoot.querySelector('#close').onclick = this.handleClose.bind(this);
+        this.value.getFlowActions().forEach(action => {
+            this.shadowRoot.querySelector(`button.${action.id}`).onclick = () => { action.handler.call(this.value, this, action) }
+        })
 
     }
     removeEventHandlers() {
-        window.removeEventListener("resize", this.handleSVGResizeListner)
+        window.removeEventListener("resize", this.handleResizeListner)
         document.removeEventListener("keydown", this.handleKeyPressListner)
 
     }
     afterRender() {
-        var flowConfig = this.value.flowConfig || {}
-        var action = { ...this.defaultConfig.action, ...flowConfig.action || {} }
-        var defaultValue = { ...this.defaultConfig.defaultValue, ...flowConfig.defaultValue || {} }
-        this.config = { ...this.defaultConfig, ...flowConfig, action, defaultValue }
-
-        if (this.config.flex) {
-            this.classList.add('flex')
-        } else {
-            this.classList.remove('flex')
-        }
+       this.setupConfig()
 
         this.linkMap = {}
         this.fufemap = new WeakMap()
@@ -860,7 +918,7 @@ class Flow extends ElementGroup {
         }
 
         if (this.value) {
-            console.log('afterRender updateSVG')
+            this.debugger.log('afterRender updateSVG')
             this.updateSVG()
         } else {
 
@@ -869,12 +927,27 @@ class Flow extends ElementGroup {
 
 
     update() {
-        console.log('update updateSVG')
+        this.setupConfig()
+        this.debugger.log('update updateSVG')
         this.updateSVG()
     }
 
+    setupConfig(){
+        var flowConfig = this.value.flowConfig || {}
+        var elementAction = { ...this.defaultConfig.elementAction, ...flowConfig.elementAction || {} }
+        var flowAction = { ...this.defaultConfig.flowAction, ...flowConfig.flowAction || {} }
+        var defaultValue = { ...this.defaultConfig.defaultValue, ...flowConfig.defaultValue || {} }
+        this.config = { ...this.defaultConfig, ...flowConfig, elementAction, flowAction, defaultValue }
+
+        if (this.config.flex) {
+            this.classList.add('flex')
+        } else {
+            this.classList.remove('flex')
+        }
+    }
+
     handleKeyPress(e) {
-        //console.log(e)
+        //this.debugger.log(e)
         e = e || window.event;
         if (e.keyCode == '13') {
             this.setActiveByEnterKey()
@@ -947,8 +1020,8 @@ class Flow extends ElementGroup {
     //Update flowElments and their links
     async updateSVG() {
 
-        const width = this.clientWidth
-        const height = this.clientHeight
+        const containerWidth = this.clientWidth
+        const containerheight = this.clientHeight
 
 
 
@@ -961,38 +1034,35 @@ class Flow extends ElementGroup {
 
 
 
-        
 
         this.typesToRender.forEach(async (type) => {
 
             this.performanceStart(`Processing flowElements took for ${type}`)
 
             var typeIndex = this.getTypeIndex(type)
-            this.value.designElements.filter(de=>de.type==type).forEach((DesignElement, functionUnitIndex) => {
+            this.value.getElements().filter(de => de.type == type).forEach((DesignElement, functionUnitIndex) => {
                 var flowElement = this.getFlowElement(DesignElement)
 
 
-                if (flowElement.isActive) {
-                    return
-                }
 
-                var xEvenelySpaced = FlowUtility.getEvenlySpacedFromCenter(width, this.value.types.length, this.getFlowElementDimension(flowElement).width, this.getFlowElementDimensionpadding(flowElement).xpadding)
-
+                const { width, height } = this.getFlowElementDimension(flowElement)
+                const { xpadding, ypadding } = this.getFlowElementDimensionpadding(flowElement);
+                var xEvenelySpaced = FlowUtility.getEvenlySpacedFromCenter(containerWidth, this.value.types.length, width, xpadding)
 
 
-                flowElement.dimensions(xEvenelySpaced.divisonElementDimensions[typeIndex], this.getFlowElementDimension(flowElement).height);
-                // /flowElement.coordinates(xEvenelySpaced.coordinates[typeIndex],(height / 2))
-                //console.log(flowElement.type, 'Direct', xEvenelySpaced.coordinates[typeIndex], xEvenelySpaced.divisonElementDimensions[typeIndex], flowElement.getBoundingClientRect().x)
+                const newWidth = (this.config.flex || flowElement.isActive) ? width : xEvenelySpaced.divisonElementDimensions[typeIndex]
+                flowElement.dimensions(newWidth, height);
+                //this.debugger.log(flowElement.type, 'Direct', xEvenelySpaced.coordinates[typeIndex], xEvenelySpaced.divisonElementDimensions[typeIndex], flowElement.getBoundingClientRect().x)
 
 
                 flowElement.classList.add(type)
-                
+
                 var fuNexts = Array.from([...DesignElement.next()])
                 var fuPreviouses = Array.from([...DesignElement.previous()])
 
                 //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
-                fuNexts.forEach(identifier => {
-                    var nextFU = this.value.getFunctionalUnit(identifier)
+                fuNexts.forEach(id => {
+                    var nextFU = this.value.getElement(id)
                     var nextFUflowElement = this.getFlowElement(nextFU, true)
                     if (nextFU && nextFUflowElement) {
                         this.link(flowElement, nextFUflowElement)
@@ -1000,8 +1070,8 @@ class Flow extends ElementGroup {
                     }
                 })
                 //Create Link for Each next FU if exist and update cordinates for that fu's fe if exist
-                fuPreviouses.forEach(identifier => {
-                    var previousFU = this.value.getFunctionalUnit(identifier)
+                fuPreviouses.forEach(id => {
+                    var previousFU = this.value.getElement(id)
                     var previousFUflowElement = this.getFlowElement(previousFU, true)
                     if (previousFU && previousFUflowElement) {
                         this.link(previousFUflowElement, flowElement)
@@ -1010,7 +1080,10 @@ class Flow extends ElementGroup {
                 })
 
                 //Calculate and set coordinates 
-                flowElement.coordinates(this.getFlowElementCoordinates(flowElement).x, this.getFlowElementCoordinates(flowElement).y)
+                if (!this.config.flex) {
+                    const { x, y } = this.getFlowElementCoordinates(flowElement)
+                    flowElement.coordinates(x, y)
+                }
 
             });
 
@@ -1026,7 +1099,7 @@ class Flow extends ElementGroup {
 
     order = 'right-to-left' || 'left-to-right' || 'center'
     get typesToRender() {
-        if(this.types.length==1){
+        if (this.types.length == 1) {
             return this.types
         }
         if (this.order == 'left-to-right')
@@ -1134,6 +1207,7 @@ class Flow extends ElementGroup {
         flowElement.value = designElement
         flowElement.parentFlow = this
         flowElement.config = designElement.config
+        flowElement.actionConfig = {...flowElement.actionConfig,...designElement.config.action||{}}
 
         this.shadowRoot.querySelector('slot').append(flowElement)
 
@@ -1142,28 +1216,31 @@ class Flow extends ElementGroup {
         return flowElement
     }
     getFlowElementDimension(flowElement) {
-        const state = flowElement.getState()
+        const state = flowElement.state
         switch (state) {
             case 'active':
-                var width = this.config.active.width || "60%"
-                var height = this.config.active.height || "60%"
+                var width = this.config.active.width || this.clientWidth*0.6
+                var height = this.config.active.height || this.clientHeight*0.6
                 return { width, height }
                 break;
 
             default:
-                var width = flowElement.config.width||this.config.feWidth  || ((flowElement.config.widthPercentage ||this.config.feWidthPercentage || 33)/100)*this.clientWidth
-                var height = flowElement.config.height||this.config.feHeight  || ((flowElement.config.heightPercentage||this.config.feHeightPercentage || 33)/100)*this.clientHeight
+                var width = flowElement.config.width || this.config.feWidth || ((flowElement.config.widthPercentage || this.config.feWidthPercentage || 33) / 100) * this.clientWidth
+                var height = flowElement.config.height || this.config.feHeight || ((flowElement.config.heightPercentage || this.config.feHeightPercentage || 33) / 100) * this.clientHeight
                 return { width, height }
         }
 
     }
     getFlowElementDimensionpadding(flowElement) {
-        var xpadding = flowElement.config.xPadding||this.getFlowElementDimension(flowElement).width * ((flowElement.config.xPaddingPercentage||this.config.fexPaddingPercentage)/100 || 0.4)
-        var ypadding = flowElement.config.yPadding||this.getFlowElementDimension(flowElement).height * ((flowElement.config.yPaddingPercentage/100||this.config.feyPaddingPercentage) || 0.2)
+        const { width, height } = this.getFlowElementDimension(flowElement)
+        var xpadding = flowElement.config.xPadding || width * ((flowElement.config.xPaddingPercentage || this.config.fexPaddingPercentage) / 100 || 0.4)
+        var ypadding = flowElement.config.yPadding || height * ((flowElement.config.yPaddingPercentage / 100 || this.config.feyPaddingPercentage) || 0.2)
         return { xpadding, ypadding }
     }
     getFlowElementCoordinates(flowElement) {
-        const state = flowElement.getState()
+        const { width, height } = this.getFlowElementDimension(flowElement)
+        const { xpadding, ypadding } = this.getFlowElementDimensionpadding(flowElement);
+        const state = flowElement.state
         switch (state) {
             case 'active':
 
@@ -1175,16 +1252,16 @@ class Flow extends ElementGroup {
                 var xEvenelySpaced = FlowUtility.getEvenlySpacedFromCenter(
                     this.clientWidth,
                     this.value.types.length,
-                    this.getFlowElementDimension(flowElement).width,
-                    this.getFlowElementDimensionpadding(flowElement).xpadding
+                    width,
+                    xpadding
                 )
 
                 var siblings = this.shadowRoot.querySelectorAll('.' + flowElement.type)//flowElement.siblings()//Have to find most scalable way
                 var yEvenelySpaced = FlowUtility.getEvenlySpacedFromCenter(
                     this.clientHeight,
                     siblings.length,
-                    this.getFlowElementDimension(flowElement).height,
-                    this.getFlowElementDimensionpadding(flowElement).ypadding
+                    height,
+                    ypadding
                 )
 
                 var xindex = this.value.types.indexOf(flowElement.type)
@@ -1218,8 +1295,8 @@ class Flow extends ElementGroup {
         return link.node();
     }
 
-    handleSVGResize() {
-        console.log('handleSVGResize updateSVG')
+    handleResize() {
+        this.debugger.log('handleResize updateSVG')
         this.updateSVG()
     }
 
@@ -1261,7 +1338,8 @@ class Flow extends ElementGroup {
 
     handleClose() {
         var activeFlowElements = this.shadowRoot.querySelectorAll('.active')
-        if (activeFlowElements.length > 0) {
+        var flowElements = this.shadowRoot.querySelectorAll('ui-flow-element')
+        if (activeFlowElements.length > 0 && flowElements.length>1) {
             activeFlowElements.forEach(fu => fu.inactive())
         } else {
 
@@ -1290,33 +1368,15 @@ class Flow extends ElementGroup {
 
 
 
-    log(msg) {//See https://stackoverflow.com/a/27074218/470749
-        var e = new Error();
-        if (!e.stack)
-            try {
-                // IE requires the Error to actually be thrown or else the 
-                // Error's 'stack' property is undefined.
-                throw e;
-            } catch (e) {
-                if (!e.stack) {
-                    //return 0; // IE < 10, likely
-                }
-            }
-        var stack = e.stack.toString().split(/\r\n|\n/);
-        if (msg === '') {
-            msg = '""';
-        }
-        console.log(msg, '          [' + stack[1] + ']');
-    }
-
-
-
     static getSample() {
         const listElement = document.createElement(ElementGroup.elementRegistry[this])
         listElement.value = ['Item 1', 'Item 2', 'Item 3']
         return listElement
     }
 
+    static tag = 'ui-flow';
+
 }
-ElementGroup.register('ui-flow', Flow);
-export { Flow };
+ElementGroup.register(Flow.tag, Flow);
+
+export { Flow, FlowElement };

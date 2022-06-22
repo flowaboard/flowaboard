@@ -1,5 +1,5 @@
 import {ElementGroup} from '../element-group/group.js'
-import { Element } from '../element/element.js'
+import Element from '../element/element.js'
 import * as ui from '../export.js'
 import { Search } from '../group-behaviour/search.js';
 import { ElementType } from './element-type.js'

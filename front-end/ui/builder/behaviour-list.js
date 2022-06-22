@@ -1,6 +1,6 @@
 import { Behaviour } from '../behaviour/behaviour.js';
 import { List } from '../element-group/list.js';
-import { Element } from '../element/element.js'
+import Element from '../element/element.js'
 class BehaviourList extends List{
     constructor() {
         super();

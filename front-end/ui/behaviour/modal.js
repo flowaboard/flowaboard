@@ -1,4 +1,4 @@
-import { Element } from "../element/element.js";
+import Element from "../element/element.js";
 
 class Modal extends Element {
     get visible() {

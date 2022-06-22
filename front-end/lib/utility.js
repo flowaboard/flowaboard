@@ -19,12 +19,12 @@ export default class Utility {
         return typeof id=="string" && id.match(regex)
     }
     static isJSUrlPath(id) {
-        var expression = /\/(.*).js$/gi;
+        var expression = /(\/)+(.*).js$/gi;
         var regex = new RegExp(expression);
         return typeof id=="string" && id.match(regex)
     }
     static isFlowUrlPath(id) {
-        var expression = /\/(.*).flow$/gi;
+        var expression = /(\/)+(.*).flow$/gi;
         var regex = new RegExp(expression);
         return typeof id=="string" && id.match(regex)
     }
