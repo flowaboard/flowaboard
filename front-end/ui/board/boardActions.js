@@ -4,7 +4,7 @@ class BoardActions extends ElementGroup {
 
     get CSS() {
         return `
-        .button {
+        ::slotted(.button) {
             background-color: #394753;
             border: none;
             text-align: center;
