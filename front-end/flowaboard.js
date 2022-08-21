@@ -1,9 +1,11 @@
 
 import { Design, DesignElement, FlowDesigns } from './flowdesign/design.js';
 
-import { Flow } from './ui/element-group/flow.js'
+
 
 import Debugger from './lib/debugger.js';
+import Board from './ui/board/board.js';
+import { Flow } from './ui/flow/flow.js'
 
 class FlowAboard {
     skipWindowHistory = true;
@@ -38,79 +40,27 @@ class FlowAboard {
         this.parent = parent;
         //window.addEventListener('popstate', (e)=>this.historyListener(e));
     }
-    async load(design) {
+    async load(designElement) {
         try {
 
-            const flow = await this.getFlowUi();
-
-            flow.value = design;
-            design.subscribe('change', (e) => {
-                flow.update(e)
-            })
-
-            return flow
+            this.board = await this.getBoardUI(designElement);                
+            this.board.value = designElement
+            return this.board
         } catch (error) {
             this.debugger.error(error)
         }
 
     }
-    async getFlowUi() {
+    async getBoardUI(designElement) {
 
-        let flow = this.parent.querySelector(Flow.tag)
-        if (this.flow) {
-            return flow
+        let board = this.parent.querySelector(Board.tag)
+        if (board) {
+            return board
         }
-        this.flow = Flow.getNewInstance();
+        this.board = Board.getNewInstance();       
 
-
-
-        this.flow.addEventListener('openflow', async (e) => {
-            this.debugger.log('flow', e.detail.value)
-            if (e.detail.value) {
-                this.openFlow(e.target, e.detail.value)
-
-            }
-
-        })
-        this.flow.addEventListener('closeflow', async (e) => {
-            this.debugger.log('flow', e.detail.value)
-            if (e.detail.value) {
-                this.closeFlow(e.target, e.detail.value)
-            }
-
-        })
-
-        return this.flow;
+        return this.board;
     }
-    async getOutputUi() {
-
-    }
-    async openFlow(target, designElement) {
-        let currentDesign = target.value
-        let futuredesign = await designElement.toDesign()
-        if (futuredesign) {
-            this.load(futuredesign)
-            this.pushState(currentDesign, futuredesign, this.skipWindowHistory)
-        }
-    }
-    async closeFlow(traget, designElement) {
-        let currentDesign = traget.value
-        let parentdesign = this.popState(currentDesign, this.skipWindowHistory)
-        if (parentdesign)
-            this.load(parentdesign)
-    }
-
-    async getElement(elementId) {
-
-    }
-    getCurrentDesign() {
-        return this.flow.value;
-    }
-    getPreviousDesign() {
-        return this.flow.value.parent;
-    }
-
-
 }
 
 export default FlowAboard;

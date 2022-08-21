@@ -34,7 +34,7 @@ body>.content>.description {
     flex: 1;
 }
 
-body>.content>ui-flow {
+body>.content>ui-board {
     height: 300px;
     flex: 1;
 }

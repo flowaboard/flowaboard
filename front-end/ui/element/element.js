@@ -4,11 +4,13 @@ import Debugger from "../../lib/debugger.js";
 
 
 class Element extends HTMLElement {
-    
+    valueHistory = [];
+    enableHistory=false;
+    currentHitoryIndex;
     constructor() {
         super();
-        
-        this.debugger=Debugger(this.debug,this.tagName)
+        //console.log(this.tagName,Debugger.debugs[this.tagName])
+        this.debugger=Debugger(Debugger.debugs[this.debugTag],this.debugTag)
         this.behaviours = []
         this.behaviour = {}//will convert to weekmap
         
@@ -69,6 +71,9 @@ class Element extends HTMLElement {
 
 
     }
+    get debugTag(){
+        return 'el-'+ this.tagName.toLowerCase()
+    }
     get label() {
         return this.getAttribute('label') || '';
     }
@@ -92,10 +97,34 @@ class Element extends HTMLElement {
     }
     set value(value) {
         this._value = value;
+        if(this.enableHistory){
+            if(this.valueHistory[this.currentHitoryIndex+1] != value){
+                this.valueHistory = this.valueHistory.slice(0,this.currentHitoryIndex)
+            }
+            this.valueHistory.push(value)
+            this.currentHitoryIndex = this.valueHistory.length-1
+            
+        }
         this.setAttribute('value', (value||"").toString());
         if(this._ondom){
             this.render()
         }
+    }
+
+    get oldValue(){
+        return this.valueHistory[this.valueHistory.length-1]
+    }
+
+    ctrlz(){
+        this.value = this.oldValue
+        this.currentHitoryIndex = this.currentHitoryIndex -1
+    }
+
+    ctrly(){
+        if(this.currentHitoryIndex < this.valueHistory.length-1){
+            this.value = this.valueHistory[this.currentHitoryIndex+1]
+        }
+        
     }
 
     get type() {
