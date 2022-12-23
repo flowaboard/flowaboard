@@ -13,4 +13,5 @@ var Debugger = function (gState,prefix) {
     }
     return debug
 }
+Debugger.debugs = {}
 export default Debugger

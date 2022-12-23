@@ -1,8 +1,40 @@
-body{
+body {
     margin: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    margin-bottom: 5rem;
+    align-content: flex-start;
+}
+
+body>.header {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    position: sticky;
+    box-shadow: 0px 0px 7px 2px cornflowerblue;
+}
+
+body>.header>img {
+    width: 80px;
+}
+body>.header>h1 {
+    font-family: sans-serif;
+}
+
+body>.content {
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem;
+}
+
+body>.content>.description {
+    margin-right: 1rem;
+    font-family: monospace;
+    flex: 1;
+}
+
+body>.content>ui-board {
+    height: 300px;
+    flex: 1;
 }

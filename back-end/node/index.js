@@ -7,31 +7,7 @@ express()
   .get('/login', (req, res)=>{
     res.sendFile(frontEndPath+'/login.html');
   })
-  .get('/mathematics/*', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/mathematics', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/programming/*', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/programming', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/ai/*', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/ai', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/business/*', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/business', (req, res)=>{
-    res.sendFile(frontEndPath+'/index.html');
-  })
-  .get('/', (req, res)=>{
+  .get('/*', (req, res)=>{
     res.sendFile(frontEndPath+'/index.html');
   })
   .listen(PORT, () => console.log(`Listening on ${ PORT } serving frontend from `+frontEndPath))
