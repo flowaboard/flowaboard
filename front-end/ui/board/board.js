@@ -11,10 +11,13 @@ class Board extends ElementGroup {
         :host{
             position: relative;
         }
-        ui-board-actions{
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
+        
+        :host(.full-window){
+            position: fixed;
+            width: 100% !important;
+            height: 100% !important;
+            top: 0;
+            left: 0;
         }
         `
 
@@ -25,7 +28,8 @@ class Board extends ElementGroup {
                 <ui-flow></ui-flow>
             </slot>
             <slot name="actions" class="slot-actions">
-                <ui-board-actions></ui-board-actions>
+                <ui-board-actions location="top-right"></ui-board-actions>
+                <ui-board-actions location="bottom-right"></ui-board-actions>
             </slot>
         `
     }
@@ -80,18 +84,37 @@ class Board extends ElementGroup {
         this.flowValues.push(flow.value) 
         this.addActions(flow.value)
     }
-    async addActions(design){
-        let boardActions = this.shadowRoot.querySelector(BoardActions.tag)
+    getBoardActions(location){
+        let boardActions = this.shadowRoot.querySelector(BoardActions.tag+'[location="'+location+'"]')
         boardActions.innerHTML = '';
+        return boardActions
+    }
 
-        [...design.getFlowActions(), {icon: "fas fa-times", id: 'close' }].forEach(action => {
+    async addActions(design){
+        let bottomRightBAs = this.getBoardActions('bottom-right');
+        let topRightBAs = this.getBoardActions('top-right');
+
+        [...design.getFlowActions(),
+            { icon: "fas fa-times", id: 'close' },
+            { icon: "fas fa-arrows-alt", id: 'full-window',location:'top-right' },
+        ].forEach(action => {
             let button = document.createElement('button')
             button.classList.add('button')
-            button.innerHTML = `${action.icon?'<i class="fas fa-times"></i>':''} ${action.label?'<span class="label">'+action.label+'</span>':''}`
+            button.innerHTML = `${action.icon?'<i class="'+action.icon+'"></i>':''} ${action.label?'<span class="label">'+action.label+'</span>':''}`
             button.setAttribute('data-action-id',action.id)
             button.onclick = ()=>this.handleAction(button)
             button.action = action
-            boardActions.appendChild(button) 
+            
+            switch (action.location) {
+                case 'top-right':
+                    topRightBAs.appendChild(button) 
+                    break;
+            
+                default:
+                    bottomRightBAs.appendChild(button) 
+                    break;
+            }
+           
 
         });
         
@@ -102,8 +125,13 @@ class Board extends ElementGroup {
         let actionId = button.action.id
         switch (actionId) {
             case 'close':
-                let flow = this.shadowRoot.querySelector(Flow.tag)
                 flow.handleClose()
+                break; 
+            case 'full-window':
+                this.classList.toggle('full-window')
+                break;
+            case 'full-screen':
+                this.classList.toggle('full-screen')
                 break;        
             default:
                 button.action.handler.call(flow.value,flow,button.action.id)

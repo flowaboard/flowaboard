@@ -4,6 +4,16 @@ class BoardActions extends ElementGroup {
 
     get CSS() {
         return `
+        :host(.bottom-right){
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+        }
+        :host(.top-right){
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
         ::slotted(.button) {
             background-color: #394753;
             border: none;
@@ -94,6 +104,9 @@ class BoardActions extends ElementGroup {
                 </slot>
             </div>
         `
+    }
+    afterRender(){
+        this.classList.add(this.getAttribute('location'))
     }
     static tag = 'ui-board-actions';
 

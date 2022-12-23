@@ -35,6 +35,27 @@ const flow = await flowly.load(currentDesignElement)
 abstractContent.appendChild(flow)
 
 
+function toggleFullScreen(flow) {
+    if (!document.fullscreenElement) {
+      // If the document is not in full screen mode
+      // make the video full screen
+      flow.requestFullscreen();
+    } else {
+      // Otherwise exit the full screen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+// On pressing ENTER call toggleFullScreen method
+document.addEventListener("keypress", function(e) {
+  if (e.key === 'f') {
+    toggleFullScreen(flow);
+  }
+}, false);
+
+
 
 
 

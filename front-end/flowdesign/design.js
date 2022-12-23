@@ -210,10 +210,10 @@ class DesignElement extends Data {
     }
     async toDesign() {
         if (!this.design && this.designId) {
-            return await this.loadDesign(this.designId);
-        } else {
-            return this.design
+            this.design = await this.loadDesign(this.designId);
         }
+        return this.design
+
     }
 
     getRoot(root) {

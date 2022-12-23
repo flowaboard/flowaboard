@@ -58,19 +58,19 @@ class Flow extends ElementGroup {
             transform-style: preserve-3d;
             overflow:hidden;            
             position: relative;
-            box-shadow: 0px 0px 7px 2px cornflowerblue;
-            border-radius: 0.5rem;
+            bbox-shadow: 0px 0px 7px 2px cornflowerblue;
+            bborder-radius: 0.5rem;
         } 
         :host::-webkit-scrollbar {
             width: 0.6rem;
         }
         :host::-webkit-scrollbar-thumb {
             background: #2f606a;
-            border-radius: 0.5rem;
+            bborder-radius: 0.5rem;
         }
         :host::-webkit-scrollbar-track {
             box-shadow: inset 0 0 5px #27282c;
-            border-radius: 0.5rem;
+            bborder-radius: 0.5rem;
         } 
 
         :host(.flex){
