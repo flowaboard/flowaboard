@@ -1,4 +1,4 @@
-import {DesignElement,FlowDesigns} from '/flowdesign/design.js';
+import {DesignElement,FlowDesigns} from '../design.js';
 
 var businessDesign = new FlowDesigns.ListDesign('Business', 'business', 'https://en.wikipedia.org/wiki/Business','flow-info');
 businessDesign.add(new DesignElement('Agriculture', 'agriculture', `https://en.wikipedia.org/wiki/Agriculture`, 'flow-info', '/elements/agriculture/index.js'));

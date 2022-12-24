@@ -9,7 +9,7 @@ class FunctionListElement extends DesignElement {
         var flow, functionDesign = new FunctionDesign(), elementAction;
         try {
             flow = await (await fetch(import.meta.url.replace('/functions.js','') + '/../elements/' + this.id + '.flow')).text()
-            console.log(flow)
+            this.debugger.log(flow)
             functionDesign.fromJSON(flow)
             elementAction = {
                 "click": { "action": "active", "state": "default" }
