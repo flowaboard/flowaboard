@@ -1,6 +1,6 @@
 import { ElementGroup } from '../element-group/group.js'
 
-import 'https://cdn.jsdelivr.net/npm/d3@6.6.0/dist/d3.min.js'
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 import { FlowElement } from './flow-element.js'
 
