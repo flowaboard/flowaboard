@@ -93,7 +93,7 @@ class FunctionDesign extends FlowDesigns.ProcessDesign {
         this.mathml = parsed.mathml
     }
     execute() {
-        console.log("Executing", JSON.stringify(this))
+        this.debugger.log("Executing", JSON.stringify(this))
     }
     toJavaScript() {
 
@@ -208,7 +208,7 @@ class FunctionBody extends Process {
     }
 
     handleValueChange(e) {
-        console.log(e.target.value);
+        this.debugger.log(e.target.value);
         this.parent.mathml = e.target.value.trim()
     }
 }

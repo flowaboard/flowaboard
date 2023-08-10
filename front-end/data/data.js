@@ -1,9 +1,13 @@
-import * as alaSQLSpace from '../lib/alasql/dist/alasql.js';
+
 
 import Debugger from "../lib/debugger.js";
 class Data{
-    constructor(){        
-        this.debugger=Debugger(this.debug||this.constructor.debug,this.constructor.name)
+    constructor(){   
+        //console.log(this.debugTag,Debugger.debugs[this.debugTag])     
+        this.debugger=Debugger(Debugger.debugs[this.debugTag],this.debugTag)
+    }
+    get debugTag(){
+        return 'data-'+this.constructor.name
     }
     eventListeners={
 

@@ -1,27 +1,34 @@
 import { Data } from '../data/data.js'
 import Wiki from '../lib/wiki/wiki.js';
 import Utility from '../lib/utility.js';
+import { ALASQL } from '../data/rdb.js';
 
 
 
 class Design extends Data {
     id;
+    type;
     description;
     label;
     parentDesignId;
-    functionUnitMap;
+
     designElements = [];
+    designElementMap = {};
+
+    designLinks = []
+    designLinkMap = {}
 
     rootEndPoint;
 
     constructor(label, id, description, designElementsId) {
 
         super()
-        this.functionUnitMap = {}
+        this.designElementMap = {}
         this.id = id;
         this.description = description;
         this.designElementsId = designElementsId;
         this.label = label;
+        this.type = this.constructor.name
     }
 
     _description;
@@ -42,13 +49,13 @@ class Design extends Data {
     }
 
     getElement(id) {
-        return this.functionUnitMap[id]
+        return this.designElementMap[id]
     }
 
     getElements(ids) {
         if (ids && ids.length > 0) {
             //Can also use cache system to make things faster
-            return ids.map(id => this.functionUnitMap[id]).filter(v => !!v);
+            return ids.map(id => this.designElementMap[id]).filter(v => !!v);
         } else if (ids && ids.length == 0) {
             return []
         } else {
@@ -56,20 +63,25 @@ class Design extends Data {
         }
     }
 
+
+    getLinks() {
+        return designLinks
+    }
+
     add(designElement) {
 
-        if (this.functionUnitMap[designElement.id]) {
-            this.functionUnitMap[designElement.id].update(designElement)
+        if (this.designElementMap[designElement.id]) {
+            this.designElementMap[designElement.id].update(designElement)
 
         } else {
-            this.functionUnitMap[designElement.id] = designElement
+            this.designElementMap[designElement.id] = designElement
             this.designElements.push(designElement)
             designElement.parent = this;
         }
         if (!this._types.find((v) => v == designElement.type)) {
             this._types.push(designElement.type)
         }
-        return this.functionUnitMap[designElement.id]
+        return this.designElementMap[designElement.id]
     }
     addFromJSON(json) {
         var parsed = JSON.parse(json)
@@ -133,16 +145,45 @@ class Design extends Data {
         return {
             label: this.label,
             id: this.id,
+            type: this.type,
             description: this.description,
             designElements: this.designElements,
-
+            designLinks: this.designLinks
         };
+    }
+
+    async toRDB() {
+        let alasql = await ALASQL.createDB('localStorage', 'Flowabaord')
+        let designTable = await alasql.createTable(
+            'Design',
+            'dbid INT IDENTITY(1,1),uuid string,label string, id string, type string, description string'
+        );
+        let designElementTable = await alasql.createTable(
+            'DesignElement',
+            'dbid INT IDENTITY(1,1),uuid string,label string, id string, type string, description string, designId string, config string'
+        )
+        let designLinkTable = await alasql.createTable(
+            'DesignLink',
+            'dbid INT IDENTITY(1,1),uuid string,label string, id string, type string, description string, sourceId string,destinationId string, config string'
+        )
+
+        designTable.insert([{
+            label: this.label,
+            id: this.id,
+            type: this.type,
+            description: this.description
+        }])
+
+        designElementTable.insert(this.designElements)
+        designLinkTable.insert(this.designLinks)
+
     }
 
     fromJSON(json) {
         var parsed = JSON.parse(json)
         this.label = parsed.label;
         this.id = parsed.id;
+        this.type = parsed.type;
         this.description = parsed.description;
         this.config = parsed.config
         this.designElementsId = parsed.designElementsId;
@@ -260,6 +301,26 @@ class DesignElement extends Data {
 
 }
 
+class DesignLinks extends Data {
+    source;
+    destination;
+    config;
+    label;
+    id;
+    description;
+    type;
+    constructor(sourceId, destinationId, label, description, config) {
+        super()
+        this.label = label;
+        this.id = sourceId + '->' + destinationId;
+        this.description = description;
+        this.sourceId = sourceId;
+        this.destinationId = destinationId;
+        this.config = config;
+        this.type = this.constructor.name
+    }
+}
+
 
 
 
@@ -329,6 +390,16 @@ class IODesign extends Design {
         this.processes = []
     }
 
+    createLink(sourceElementId, destinationElementId) {
+        var link = this.designLinkMap[sourceElementId + "->" + destinationElementId]
+        if (!link) {
+            link = new DesignLinks(sourceElementId, destinationElementId)
+            this.designLinkMap[sourceElementId + "->" + destinationElementId] = link
+            this.designLinks.push(link)
+        }
+        return link
+    }
+
 
     add(ioElement) {
         if (ioElement instanceof Input) {
@@ -343,34 +414,67 @@ class IODesign extends Design {
     }
 
     addInput(input) {
-        this.inputs.push(super.add(input))
+        this.inputs.push(super.add(input));
 
-        this.getElements([...input.processIdentifiers || []]).forEach(fu => fu.inputIdentifiers.add(input.id))
+        [...input.processIdentifiers || []].forEach(processid => {
+            this.createLink(input.id, processid);
+        })
+
+        this.getElements([...input.processIdentifiers || []]).forEach(fu => {
+            fu.inputIdentifiers.add(input.id)
+            this.createLink(input.id, fu.id)
+        });
+
+
 
 
         this.publish('change')
     }
     addOutput(output) {
-        this.outputs.push(super.add(output))
+        this.outputs.push(super.add(output));
 
-        this.getElements([...output.processIdentifiers || []]).forEach(fu => fu.outputIdentifiers.add(output.id))
+        [...output.processIdentifiers || []].forEach(processid => {
+            this.createLink(processid, output.id)
+        })
+
+        this.getElements([...output.processIdentifiers || []]).forEach(fu => {
+            fu.outputIdentifiers.add(output.id)
+            this.createLink(fu.id, output.id)
+        });
+
+
 
         super.add(output)
         this.publish('change')
 
     }
     addProcess(process) {
-        this.processes.push(super.add(process))
+        this.processes.push(super.add(process));
+
+        [...process.inputIdentifiers || []].forEach(inputid => {
+            this.createLink(inputid, process.id)
+        });
+
+        [...process.outputIdentifiers || []].forEach(outputid => {
+            this.createLink(process.id, outputid)
+        });
 
         Array.from([...process.inputIdentifiers])
             .filter(inputIdentifier => !this.getElement(inputIdentifier))
             .map(inputIdentifier => new Input(inputIdentifier, inputIdentifier, inputIdentifier, [process.id]))
-            .forEach(input => this.addInput(input))
+            .forEach(input => {
+                this.addInput(input);
+                this.createLink(input.id, process.id);
+            })
 
         Array.from([...process.outputIdentifiers])
             .filter(outputIdentifier => !this.getElement(outputIdentifier))
             .map(outputIdentifier => new Output(outputIdentifier, outputIdentifier, outputIdentifier, [process.id]))
-            .forEach(output => this.addOutput(output))
+            .forEach(output => {
+                this.addOutput(output);
+                this.createLink(process.id, output.id);
+            })
+
 
         super.add(process)
         this.publish('change')
@@ -462,5 +566,18 @@ const FlowDesigns = {
     ListDesign
 }
 
+const Designs = {
+    ProcessDesign,
+    SerialDesign,
+    ParallelDesign,
+    OptionalDesign,
+    IODesign,
+    ListDesign
+}
 
-export { FlowDesigns, Design, Input, Output, Process, Step, DesignElement }
+const DesignElements = {
+    Input, Output, Process, Step, DesignElement
+}
+
+
+export { FlowDesigns, Designs, Design, Input, Output, Process, Step, DesignElements, DesignElement }

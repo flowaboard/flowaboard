@@ -148,7 +148,7 @@ class Element extends HTMLElement {
     async connectedCallback() {
         this._ondom = true;
         await this.render();
-        this.attachEventHandlers();
+        //this.attachEventHandlers(); repeated logic already called in after render
     }
     disconnectedCallback() {
         this._ondom = false;
